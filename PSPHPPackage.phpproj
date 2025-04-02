@@ -1,0 +1,14 @@
+﻿<Project Sdk="Devsense.Php.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>87a54d40-b30d-ec7d-9677-91a1dbc36108</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <EnvName>PHPDev</EnvName>
+    <RuntimeVersion>8.1</RuntimeVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="src\Certs\" />
+    <Folder Include="src\Domain\" />
+    <Folder Include="src\Exceptions\" />
+  </ItemGroup>
+</Project>
