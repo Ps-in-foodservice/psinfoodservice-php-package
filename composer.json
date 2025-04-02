@@ -1,18 +1,15 @@
 {
     "name": "psinfoodservice/psinfoodserviceapi",
-    "description": "PSinfoodservice API client",
+    "description": "A comprehensive PHP client library for the PS in foodservice Web API","type": "library",
     "type": "library",
+    "license": "MIT", 
     "require": {
-        "php": "^8.0",
+        "php": ">=7.4",
         "guzzlehttp/guzzle": "^7.0"
     },
     "autoload": {
         "psr-4": {
             "PSinfoodservice\\": "src/"
         }
-    },
-    "license": "MIT",
-    "require-dev": {
-        "phpunit/phpunit": "^10.5"
     }
 }
