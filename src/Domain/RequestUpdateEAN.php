@@ -1,6 +1,6 @@
 <?php
 namespace PSinfoodservice\Domain;
-class RequestUpdateEAN extends RequestUpdate
+class RequestUpdateGtin extends RequestUpdate
 {
     /**
      * List of search criteria
@@ -10,7 +10,7 @@ class RequestUpdateEAN extends RequestUpdate
 
     /**
      * Set the search criteria
-     * @param array $criteria The array of EAN codes
+     * @param array $criteria The array of Gtins
      * @return $this
      */
     public function setSearchCriteria(array $criteria)

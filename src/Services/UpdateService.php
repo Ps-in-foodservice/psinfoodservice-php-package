@@ -6,7 +6,7 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
-use PSinfoodservice\Domain\RequestUpdateEAN;
+use PSinfoodservice\Domain\RequestUpdateGtin;
 use PSinfoodservice\Domain\RequestUpdatePSId;
 use PSinfoodservice\Domain\RequestUpdateArticle;
 use PSinfoodservice\Domain\RequestUpdateGln;
@@ -32,17 +32,17 @@ class UpdateService {
     }
 
     /**
-     * Updates product information using EAN numbers.
+     * Updates product information using Gtin numbers.
      *
-     * @param RequestUpdateEAN $request The update request containing EAN data
+     * @param RequestUpdateGtin $request The update request containing GTIN data
      * @return object|null The update response data or null if no data is available
      * @throws PSApiException If the update operation fails
      */
-    public function Ean(RequestUpdateEAN $request): ?object
+    public function Gtin(RequestUpdateGtin $request): ?object
     {
         try {
             $response = $this->client->getHttpClient()->post(
-                "/v7/json/Updates/Ean",
+                "/v7/json/Updates/Gtin",
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());

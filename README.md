@@ -102,7 +102,7 @@ $myproducts = $client->webApi->getMyProducts();
 if ($myproducts != null) { 
     echo "<br /><br />Mijn producten:<br />";
     foreach ($myproducts as $product) {
-        echo "Id: " . $product->LogisticId . "<br />EAN: " . $product->GTIN . "<br />LastChanged: " . $product->LastChanged . "<br />";
+        echo "Id: " . $product->LogisticId . "<br />GTIN: " . $product->GTIN . "<br />LastChanged: " . $product->LastChanged . "<br />";
     }
 }
 ```
@@ -184,7 +184,7 @@ $assortmentList = $client->assortment->getAssortmentList('00000000-0000-0000-000
 echo "Items:\n";
 if ($assortmentList->items != null) {
     foreach ($assortmentList->items as $item) {
-        echo "EAN: " . $item->gtince . "\n";
+        echo "GTIN: " . $item->gtince . "\n";
         echo "ArticleNumber: " . $item->articleNumber . "\n";
     }
 }
@@ -193,9 +193,9 @@ if ($assortmentList->items != null) {
 ### Tracking Updates
 
 ```php
-// Get updates based on EAN codes
-$updates = $client->updates->Ean((
-    new RequestUpdateEAN())
+// Get updates based on GTIN codes
+$updates = $client->updates->Gtin((
+    new RequestUpdateGtin())
     ->setSearchCriteria(['1236547892138', '12365478921381', '1236547892139'])
     ->setLastUpdatedAfter(date('c', strtotime('-3 days')))
     ->setTargetMarket(1)
