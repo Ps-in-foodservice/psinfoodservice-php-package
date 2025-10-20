@@ -1,7 +1,10 @@
 <?php
 namespace PSinfoodservice\Domain;
 
-class RequestUpdateAssortment extends RequestUpdate
+/**
+ * Request class for looking up assortment information.
+ */
+class RequestLookupAssortment extends RequestLookup
 {
     /**
      * Assortment ID

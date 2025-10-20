@@ -6,23 +6,23 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
-use PSinfoodservice\Domain\RequestUpdateGtin;
-use PSinfoodservice\Domain\RequestUpdatePSId;
-use PSinfoodservice\Domain\RequestUpdateArticle;
-use PSinfoodservice\Domain\RequestUpdateGln;
-use PSinfoodservice\Domain\RequestUpdateAssortment;
+use PSinfoodservice\Domain\RequestLookupGtin;
+use PSinfoodservice\Domain\RequestLookupPSId;
+use PSinfoodservice\Domain\RequestLookupArticlenumber;
+use PSinfoodservice\Domain\RequestLookupGln;
+use PSinfoodservice\Domain\RequestLookupAssortment;
 
 /**
- * Service for handling product update operations in the PS in foodservice API.
+ * Service for handling product lookup operations in the PS in foodservice API.
  */
-class UpdateService {
+class LookupService {
     /**
      * The PS in foodservice client instance.
      */
     private PSinfoodserviceClient $client;
 
     /**
-     * Initializes a new instance of the UpdateService.
+     * Initializes a new instance of the LookupService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
@@ -32,17 +32,17 @@ class UpdateService {
     }
 
     /**
-     * Updates product information using Gtin numbers.
+     * Looks up product information using Gtin numbers.
      *
-     * @param RequestUpdateGtin $request The update request containing GTIN data
-     * @return object|null The update response data or null if no data is available
-     * @throws PSApiException If the update operation fails
+     * @param RequestLookupGtin $request The lookup request containing GTIN data
+     * @return object|null The lookup response data or null if no data is available
+     * @throws PSApiException If the lookup operation fails
      */
-    public function Gtin(RequestUpdateGtin $request): ?object
+    public function Gtin(RequestLookupGtin $request): ?object
     {
         try {
             $response = $this->client->getHttpClient()->post(
-                "/v7/json/Updates/Gtin",
+                $this->client->buildApiPath('Lookup/gtin'),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
@@ -60,17 +60,17 @@ class UpdateService {
     }
 
     /**
-     * Updates product information using PS IDs.
+     * Looks up product information using PS IDs.
      *
-     * @param RequestUpdatePSId $request The update request containing PS ID data
-     * @return object|null The update response data or null if no data is available
-     * @throws PSApiException If the update operation fails
+     * @param RequestLookupPSId $request The lookup request containing PS ID data
+     * @return object|null The lookup response data or null if no data is available
+     * @throws PSApiException If the lookup operation fails
      */
-    public function PsId(RequestUpdatePSId $request): ?object
+    public function PsId(RequestLookupPSId $request): ?object
     {
         try {
             $response = $this->client->getHttpClient()->post(
-                "/v7/json/Update/PsId",
+                $this->client->buildApiPath('Lookup/psId'),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
@@ -88,17 +88,17 @@ class UpdateService {
     }
 
     /**
-     * Updates product information using article numbers.
+     * Looks up product information using article numbers.
      *
-     * @param RequestUpdateArticle $request The update request containing article number data
-     * @return object|null The update response data or null if no data is available
-     * @throws PSApiException If the update operation fails
+     * @param RequestLookupArticlenumber $request The lookup request containing article number data
+     * @return object|null The lookup response data or null if no data is available
+     * @throws PSApiException If the lookup operation fails
      */
-    public function ArticleNumber(RequestUpdateArticle $request): ?object
+    public function ArticleNumber(RequestLookupArticlenumber $request): ?object
     {
         try {
             $response = $this->client->getHttpClient()->post(
-                "/v7/json/Update/ArticleNumber",
+                $this->client->buildApiPath('Lookup/articlenumber'),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
@@ -116,17 +116,17 @@ class UpdateService {
     }
 
     /**
-     * Updates product information using GLN (Global Location Number).
+     * Looks up product information using GLN (Global Location Number).
      *
-     * @param RequestUpdateGln $request The update request containing GLN data
-     * @return object|null The update response data or null if no data is available
-     * @throws PSApiException If the update operation fails
+     * @param RequestLookupGln $request The lookup request containing GLN data
+     * @return object|null The lookup response data or null if no data is available
+     * @throws PSApiException If the lookup operation fails
      */
-    public function GLN(RequestUpdateGln $request): ?object
+    public function GLN(RequestLookupGln $request): ?object
     {
         try {
             $response = $this->client->getHttpClient()->post(
-                "/v7/json/Update/GLN",
+                $this->client->buildApiPath('Lookup/Gln'),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
@@ -141,23 +141,23 @@ class UpdateService {
         } catch (ServerException | ConnectException $e) {
             throw new PSApiException($e->getMessage(), 500);
             /**
-             * Service for handling product update operations in the PS in foodservice API.
+             * Service for handling product lookup operations in the PS in foodservice API.
              */
         }
     }
 
     /**
-     * Updates product assortment information.
+     * Looks up product assortment information.
      *
-     * @param RequestUpdateAssortment $request The update request containing assortment data
-     * @return object|null The update response data or null if no data is available
-     * @throws PSApiException If the update operation fails
-     */
-    public function Assortment(RequestUpdateAssortment $request): ?object
+     * @param RequestLookupAssortment $request The lookup request containing assortment data
+     * @return object|null The lookup response data or null if no data is available
+     * @throws PSApiException If the lookup operation fails
+     */ 
+    public function Assortment(RequestLookupAssortment $request): ?object
     {
         try {
             $response = $this->client->getHttpClient()->post(
-                "/v7/json/Update/Assortment",
+                $this->client->buildApiPath('Lookup/Assortment'),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());

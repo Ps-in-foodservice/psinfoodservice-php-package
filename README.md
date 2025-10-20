@@ -1,4 +1,4 @@
-# PS in foodservice API Client for PHP
+# PS in foodservice API Client for PHP.
 
 A comprehensive PHP client library for the PS in foodservice Web API (v7). This package simplifies integration with PS in foodservice services by providing a clean, type-safe interface for all API endpoints.
 
@@ -12,9 +12,9 @@ composer require psinfoodservice/psinfoodserviceapi
 
 ## Requirements
 
-- PHP 7.4 or higher
-- Composer
-- PS in foodservice account with API access
+-   PHP 7.4 or higher
+-   Composer
+-   PS in foodservice account with API access
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ try {
     // Authenticate
     $result = $client->authentication->login('your-email@example.com', 'your-password');
     echo "Authentication successful: Access token received.\n";
-    
+
     // Get product information
     $productSheet = $client->webApi->getProductSheet($psid);
     if ($productSheet != null) {
@@ -47,11 +47,11 @@ try {
 
 ## Key Features
 
-- Easy authentication with PS in foodservice API
-- Support for all API endpoints
-- Helper methods for common operations
-- Type-safe request and response handling
-- Error handling and validation support
+-   Easy authentication with PS in foodservice API
+-   Support for all API endpoints
+-   Helper methods for common operations
+-   Type-safe request and response handling
+-   Error handling and validation support
 
 ## Documentation
 
@@ -61,15 +61,15 @@ For complete API documentation, visit the [PS in foodservice API Documentation](
 
 The client is organized into multiple modules, each handling a specific part of the API:
 
-- **Authentication**: Login and token management
-- **Masters**: Reference data
-- **Assortment**: Assortment list management
-- **Brands**: Brand information
-- **Updates**: Track product updates
-- **WebApi**: Core product data operations
-- **ImpactScore**: Environmental impact scoring
-- **Images**: Product image retrieval
-- **Helper**: Utility methods for data processing
+-   **Authentication**: Login and token management
+-   **Masters**: Reference data
+-   **Assortment**: Assortment list management
+-   **Brands**: Brand information
+-   **Lookups**: Track product updates
+-   **WebApi**: Core product data operations
+-   **ImpactScore**: Environmental impact scoring
+-   **Images**: Product image retrieval
+-   **Helper**: Utility methods for data processing
 
 ## Examples
 
@@ -99,8 +99,8 @@ if ($ingredients != null) {
 ```php
 // Get all my products
 $myproducts = $client->webApi->getMyProducts();
-if ($myproducts != null) { 
-    echo "<br /><br />Mijn producten:<br />";
+if ($myproducts != null) {
+    echo "<br /><br />My products:<br />";
     foreach ($myproducts as $product) {
         echo "Id: " . $product->LogisticId . "<br />GTIN: " . $product->GTIN . "<br />LastChanged: " . $product->LastChanged . "<br />";
     }
@@ -112,7 +112,7 @@ if ($myproducts != null) {
 ```php
 // Get extended allergen information in table format
 $allergens = $client->helper->getAllergensPreview(
-    $productSheet, 
+    $productSheet,
     true,  // extended information
     Language::nl,  // language
     Outputstyle::table  // output style (table, bootstrap)
@@ -120,9 +120,9 @@ $allergens = $client->helper->getAllergensPreview(
 
 // Get simplified allergen information
 $simpleAllergens = $client->helper->getAllergensPreview(
-    $productSheet, 
+    $productSheet,
     false,  // simplified information
-    Language::nl, 
+    Language::nl,
     Outputstyle::table
 );
 ```
@@ -141,7 +141,7 @@ $nutrients = $client->helper->getNutrientsPreview(
 
 ```php
 $preparationInformations = $client->helper->getPreparationInformationPreview(
-    $productSheet, 
+    $productSheet,
     Language::nl,  // language
 );
 if ($preparationInformations != null) {
@@ -194,17 +194,17 @@ if ($assortmentList->items != null) {
 
 ```php
 // Get updates based on GTIN codes
-$updates = $client->updates->Gtin((
-    new RequestUpdateGtin())
+$lookups = $client->lookup->Gtin((
+    new RequestLookupGtin())
     ->setSearchCriteria(['1236547892138', '12365478921381', '1236547892139'])
     ->setLastUpdatedAfter(date('c', strtotime('-3 days')))
     ->setTargetMarket(1)
 );
 
-echo "Changed: " . count($updates->Changed) . "\n";
-echo "Deleted: " . count($updates->Deleted) . "\n";
-echo "Not Found: " . count($updates->NotFound) . "\n";
-echo "Not Changed: " . count($updates->NotChanged) . "\n";
+echo "Changed: " . count($lookups->Changed) . "\n";
+echo "Deleted: " . count($lookups->Deleted) . "\n";
+echo "Not Found: " . count($lookups->NotFound) . "\n";
+echo "Not Changed: " . count($lookups->NotChanged) . "\n";
 ```
 
 ### Retrieving Master Data

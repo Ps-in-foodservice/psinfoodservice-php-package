@@ -38,7 +38,7 @@ class AuthenticationService
     public function login(string $username, string $password): bool
     {
         try {
-            $response = $this->client->getHttpClient()->post("/v7/json/Account/Login", [
+            $response = $this->client->getHttpClient()->post($this->client->buildApiPath('Account/Login'), [
                 'json' => [
                     'username' => $username,
                     'password' => $password
@@ -47,7 +47,7 @@ class AuthenticationService
 
             $loginResponse = json_decode($response->getBody()->getContents(), true);
 
-             //Sla tokens op
+             //Store tokens
             $this->client->setAccessToken($loginResponse['accesstoken']);
             $this->client->setRefreshToken($loginResponse['refreshtoken']);
             $this->client->setExpiresIn($loginResponse['expiresin']);
@@ -77,13 +77,14 @@ class AuthenticationService
     public function refreshToken(string $accessToken, string $refreshToken): bool
     {
         try {
-            $response = $this->client->getHttpClient()->post("/v7/json/Account/RefreshToken", [
+            $response = $this->client->getHttpClient()->post($this->client->buildApiPath('Account/RefreshToken'), [
                 'json' => [
                     'accesstoken' => $accessToken,
                     'refreshtoken' => $refreshToken
                 ]
             ]);
             $refreshResponse = json_decode($response->getBody()->getContents(), true);
+            
             // Store tokens
             $this->client->setAccessToken($refreshResponse['accessToken']);
             $this->client->setRefreshToken($refreshResponse['refreshToken']);
@@ -110,7 +111,7 @@ class AuthenticationService
     public function logoff(): void
     {
         try {
-            $this->client->getHttpClient()->post("/v7/json/Account/logoff");
+            $this->client->getHttpClient()->post($this->client->buildApiPath('Account/logout'));
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(

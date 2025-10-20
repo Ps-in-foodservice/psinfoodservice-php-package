@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ConnectException;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 use PSinfoodservice\Domain\Language;
+use PSinfoodservice\Domain\Output;
 
 /**
  * Service for accessing web API functionality in the PS in foodservice API.
@@ -41,10 +42,14 @@ class WebApiService
     {
         try {
             if($language == Language::all) {
-                $response = $this->client->getHttpClient()->get("/v7/json/ProductSheet/{$output}/{$logisticId}"); 
+                $response = $this->client->getHttpClient()->get(
+                    $this->client->buildApiPath("ProductSheet/{$output}/{$logisticId}")
+                ); 
             }else{ 
                 $language = Language::validate($language);
-                $response = $this->client->getHttpClient()->get("/v7/json/ProductSheet/{$language}/{$output}/{$logisticId}");
+                $response = $this->client->getHttpClient()->get(
+                    $this->client->buildApiPath("ProductSheet/{$language}/{$output}/{$logisticId}")
+                );
             }
             $data = json_decode($response->getBody()->getContents());
 
@@ -79,7 +84,7 @@ class WebApiService
     {
         try {
             $response = $this->client->getHttpClient()->get(
-                "/v7/json/MyProducts"
+                $this->client->buildApiPath("MyProducts")
             );
             $data = json_decode($response->getBody()->getContents());
             if (empty($data)) {

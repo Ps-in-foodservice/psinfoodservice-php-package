@@ -1,10 +1,9 @@
 <?php
+namespace PSinfoodservice\Exceptions;
 
 /**
  * Exception class for PS in foodservice API errors.
  */
-namespace PSinfoodservice\Exceptions;
-
 class PSApiException extends \Exception
 {
     /**

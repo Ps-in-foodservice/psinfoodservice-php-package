@@ -36,7 +36,7 @@ class ImpactScoreService
     public function AllScores(): ?array
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/ImpactScore/AllScores");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('ImpactScore/AllScores'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->impactScore)) {
@@ -66,7 +66,7 @@ class ImpactScoreService
     public function GetScore(int $logisticId) :?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/ImpactScore/GetScore/{$logisticId}");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath("ImpactScore/GetScore/{$logisticId}"));
             $data = json_decode($response->getBody()->getContents());
 
             return $data;

@@ -1,11 +1,10 @@
 {
     "name": "psinfoodservice/psinfoodserviceapi",
-    "description": "A comprehensive PHP client library for the PS in foodservice Web API. Licensed for use by authorized PS in foodservice customers only.",
+    "description": "A comprehensive PHP client library for the PS in foodservice Web API",
     "type": "library",
-    "license": "proprietary",
-    "version": "1.0.1",
+    "license": "MIT",
     "require": {
-        "php": "^8.0",
+        "php": ">=7.4",
         "guzzlehttp/guzzle": "^7.0"
     },
     "autoload": {

@@ -1,7 +1,10 @@
 <?php
 namespace PSinfoodservice\Domain;
 
-class RequestUpdate
+/**
+ * Request class for looking up products.
+ */
+class RequestLookup
 {
     /**
      * Default to 1 day ago

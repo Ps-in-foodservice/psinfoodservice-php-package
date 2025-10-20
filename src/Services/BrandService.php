@@ -36,7 +36,7 @@ class BrandService
     public function All(): ?array
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Brand/All");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Brand/All'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->brands)) {
@@ -65,7 +65,7 @@ class BrandService
     public function MyBrands(): ?array
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Brand/MyBrands");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Brand/MyBrands'));
             $data = json_decode($response->getBody()->getContents());
             
             if (empty($data) || empty($data->brands)) {

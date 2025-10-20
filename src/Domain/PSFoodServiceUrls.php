@@ -24,9 +24,9 @@ class PSFoodServiceUrls
      */
     public function __construct()
     {        
-        $this->test = "https://localhost:5001/v7";
-        $this->production = "https://webapi.psinfoodservice.com/v7";
-        $this->preProduction = "https://webapi.prepod.psinfoodservice.com/v7";
+        $this->test = "https://localhost:5001";
+        $this->production = "https://webapi.psinfoodservice.com";
+        $this->preProduction = "https://webapi.prepod.psinfoodservice.com";
     }
 
     /**

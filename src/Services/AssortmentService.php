@@ -36,7 +36,7 @@ class AssortmentService
     public function getAssortmentLists(): ?array
     {
         try {
-            $response = $this->client->getHttpClient()->get('/v7/json/Assortment/GetAssortmentLists');
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Assortment/assortments'));
             $data = json_decode($response->getBody()->getContents()); 
 
             if (empty($data)) {
@@ -66,7 +66,7 @@ class AssortmentService
     public function getAssortmentList(string $id): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Assortment/GetAssortmentList/{$id}");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath("Assortment/assortments/{$id}/items"));
             $data = json_decode($response->getBody()->getContents());
              
             return $data;

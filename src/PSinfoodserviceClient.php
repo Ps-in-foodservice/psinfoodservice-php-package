@@ -10,7 +10,7 @@ use PSinfoodservice\Services\ImageService;
 use PSinfoodservice\Services\WebApiService;
 use PSinfoodservice\Services\AssortmentService;
 use PSinfoodservice\Services\ImpactScoreService;
-use PSinfoodservice\Services\UpdateService;
+use PSinfoodservice\Services\LookupService;
 use PSinfoodservice\Services\MasterService;
 use PSinfoodservice\Services\BrandService;
 use PSinfoodservice\Services\HelperService;
@@ -59,6 +59,13 @@ class PSinfoodserviceClient
     private int $expiresIn;
 
     /**
+     * API version prefix path, e.g., "/v7/json"
+     *
+     * @var string
+     */
+    private string $apiPrefix = '/v7/json';
+
+    /**
      * Authentication service for login and token management
      * 
      * @var AuthenticationService
@@ -94,11 +101,11 @@ class PSinfoodserviceClient
     public AssortmentService $assortment;
 
     /**
-     * Update service for tracking product changes
+     * Lookup service for tracking product changes
      * 
-     * @var UpdateService
+     * @var LookupService
      */
-    public UpdateService $updates;
+    public LookupService $lookups;
 
     /**
      * Master service for reference data management
@@ -128,10 +135,14 @@ class PSinfoodserviceClient
      * 
      * @param string $environment The API environment to use (preproduction or production)
      */
-    public function __construct(string $environment = Environment::preproduction)
+    public function __construct(string $environment = Environment::preproduction, ?string $apiPrefix = null)
     {
         $urls = new PSFoodServiceUrls();
         $this->baseUrl = $urls->getBaseUrl($environment);
+
+        // Determine API prefix: param > env var > default
+        $prefixFromEnv = getenv('PS_API_PREFIX') ?: null;
+        $this->apiPrefix = rtrim($apiPrefix ?? $prefixFromEnv ?? '/v7/json', '/');
 
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl,
@@ -146,11 +157,36 @@ class PSinfoodserviceClient
         $this->webApi = new WebApiService($this);
         $this->impactScore = new ImpactScoreService($this);
         $this->assortment = new AssortmentService($this);
-        $this->updates = new UpdateService($this);
+        $this->lookups = new LookupService($this);
         $this->masters = new MasterService($this);
         $this->brands = new BrandService($this);
         $this->images = new ImageService($this); 
         $this->helper = new HelperService(); 
+    }
+
+    /**
+     * Get the current API prefix path (e.g., "/v7/json").
+     */
+    public function getApiPrefix(): string
+    {
+        return $this->apiPrefix;
+    }
+
+    /**
+     * Set the API prefix path (e.g., "/v8/json").
+     */
+    public function setApiPrefix(string $apiPrefix): void
+    {
+        $this->apiPrefix = rtrim($apiPrefix, '/');
+    }
+
+    /**
+     * Build a versioned API path by prepending the API prefix.
+     */
+    public function buildApiPath(string $path): string
+    {
+        $path = '/' . ltrim($path, '/');
+        return $this->apiPrefix . $path;
     }
 
     /**

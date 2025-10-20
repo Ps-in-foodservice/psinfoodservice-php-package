@@ -1,7 +1,10 @@
 <?php
 namespace PSinfoodservice\Domain;
 
-class RequestUpdateGln extends RequestUpdate
+/**
+ * Request class for looking up GLN numbers.
+ */
+class RequestLookupGln extends RequestLookup
 {
     /**
      * GLN identifier

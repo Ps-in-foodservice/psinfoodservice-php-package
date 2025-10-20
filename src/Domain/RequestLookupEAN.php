@@ -1,6 +1,10 @@
 <?php
 namespace PSinfoodservice\Domain;
-class RequestUpdateGtin extends RequestUpdate
+
+/**
+ * Request class for looking up EAN numbers.
+ */
+class RequestLookupEAN extends RequestLookup
 {
     /**
      * List of search criteria

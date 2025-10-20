@@ -1,7 +1,10 @@
 <?php
 namespace PSinfoodservice\Domain;
 
-class RequestUpdatePSId extends RequestUpdate
+/**
+ * Request class for looking up PS IDs.
+ */
+class RequestLookupPSId extends RequestLookup
 {
     /**
      * List of search criteria

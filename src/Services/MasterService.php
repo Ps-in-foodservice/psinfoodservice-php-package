@@ -36,7 +36,7 @@ class MasterService
     public function GetAllMasters(): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Master/All");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/All'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->masters)) {
@@ -65,7 +65,7 @@ class MasterService
     public function GetLogisticMasters(): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Master/Logistic");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Logistic'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->masters)) {
@@ -94,7 +94,7 @@ class MasterService
     public function GetProductMasters(): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Master/Product");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Product'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->masters)) {
@@ -123,7 +123,7 @@ class MasterService
     public function GetStorageMasters(): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Master/Storage");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Storage'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->masters)) {
@@ -152,7 +152,7 @@ class MasterService
     public function GetSpecificationMasters(): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Master/Specification");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Specification'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->masters)) {
@@ -181,7 +181,7 @@ class MasterService
     public function GetProfileMasters(): ?object
     {
         try {
-            $response = $this->client->getHttpClient()->get("/v7/json/Master/Profile");
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Profile'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->masters)) {

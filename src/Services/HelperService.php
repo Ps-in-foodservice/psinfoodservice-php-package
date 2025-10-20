@@ -1,5 +1,4 @@
 <?php
-
 namespace PSinfoodservice\Services;
  
 use GuzzleHttp\Exception\ClientException;
@@ -53,12 +52,12 @@ class HelperService
                 'contains' => 'Contient',
                 'may_contain' => 'Peut contenir des traces',
                 'without' => 'Sans',
-                'not_specified' => 'Non spécifié',
+                'not_specified' => 'Non spï¿½cifiï¿½',
                 'per' => 'Par ',
                 'per_portie' => 'Par portion'
             ],
             'de' => [
-                'contains' => 'Enthält',
+                'contains' => 'Enthï¿½lt',
                 'may_contain' => 'Kann Spuren enthalten',
                 'without' => 'Ohne',
                 'not_specified' => 'Nicht angegeben',
@@ -73,9 +72,6 @@ class HelperService
             '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="10" width="10" xmlns="http://www.w3.org/2000/svg"><path d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256z"></path></svg>'
         ];
     }
-
-
-
 
     /**
      * Retrieves ingredient information for a product
@@ -175,10 +171,6 @@ class HelperService
         return '';
     }
 
-
-
-
-
     /**
      * Retrieves nutritional information for a product
      * 
@@ -198,7 +190,10 @@ class HelperService
             }
 
             $stateofpreparationlist = $this->getStateOfPreparationList($productSheet, $language);
-         
+            if (empty($stateofpreparationlist) || !is_array($stateofpreparationlist)) {
+                return null;
+            }
+
             $nutritionTableHtml = $this->generateNutritionTable($stateofpreparationlist, $language);
             return $nutritionTableHtml;
         } catch (ClientException $e) {
@@ -222,20 +217,27 @@ class HelperService
      */
     private function generateNutritionTable($stateofpreparationlist, $language)
     {
+        if (empty($stateofpreparationlist) || !is_array($stateofpreparationlist)) {
+            return '';
+        }
         $labels = $this->translations[$language];
 
         $html = '<table class="nutrition-tabel">';
         $html .= '<thead><tr><th></th>';
          
         foreach ($stateofpreparationlist as $prep) {
-            $html .= '<th colspan="2">' . htmlspecialchars(str_replace(["\\r", "\\n"], '', $prep['name'])) . '</th>';
+            $prepName = isset($prep['name']) ? str_replace(["\r", "\n"], '', (string)$prep['name']) : '';
+            $html .= '<th colspan="2">' . htmlspecialchars($prepName) . '</th>';
         }
         $html .= '</tr>';
          
         $html .= '<tr><th></th>';
         foreach ($stateofpreparationlist as $prep) {
-            $html .= '<th>'. $labels['per'].' 100 ' . htmlspecialchars($prep['perHunderdUomName']) . '</th>';
-            $html .= '<th>'. $labels['per_portie'].' (' . $prep['servingUnitValue'] . ' ' . htmlspecialchars($prep['servingUomName']) . ')</th>';
+            $perHunderdUomName = isset($prep['perHunderdUomName']) ? $prep['perHunderdUomName'] : '';
+            $servingUnitValue = isset($prep['servingUnitValue']) ? $prep['servingUnitValue'] : 0;
+            $servingUomName = isset($prep['servingUomName']) ? $prep['servingUomName'] : '';
+            $html .= '<th>'. $labels['per'].' 100 ' . htmlspecialchars($perHunderdUomName) . '</th>';
+            $html .= '<th>'. $labels['per_portie'].' (' . htmlspecialchars((string)$servingUnitValue) . ' ' . htmlspecialchars($servingUomName) . ')</th>';
         }
         $html .= '</tr></thead>'; 
         $html .= '<tbody>';
@@ -244,7 +246,7 @@ class HelperService
          
         $allNutrients = [];
         foreach ($stateofpreparationlist as $prep) {
-            foreach ($prep['nutrients'] as $nutrient) { 
+            foreach (($prep['nutrients'] ?? []) as $nutrient) { 
                 if (!$this->isEnergyNutrient($nutrient)) { 
                     $allNutrients[$nutrient['id']] = ($nutrient['parentid'] != 0 ? ' - ' : '') . $nutrient['name'];
                 }
@@ -253,14 +255,14 @@ class HelperService
 
         $nutrientStructure = [];
         foreach ($stateofpreparationlist as $prep) {
-            foreach ($prep['nutrients'] as $nutrient) {
+            foreach (($prep['nutrients'] ?? []) as $nutrient) {
                 if ($this->isEnergyNutrient($nutrient)) {
                     continue;
                 }
 
                 if ($nutrient['parentid'] != 0) {
                     $parentId = null;
-                    foreach ($prep['nutrients'] as $potentialParent) {
+                    foreach (($prep['nutrients'] ?? []) as $potentialParent) {
                         if (strpos($nutrient['name'], $potentialParent['name']) !== false && $potentialParent['id'] != $nutrient['id']) {
                             $parentId = $potentialParent['id'];
                             break;
@@ -292,7 +294,7 @@ class HelperService
             }
             foreach ($stateofpreparationlist as $prep) {
                 $found = false;
-                foreach ($prep['nutrients'] as $nutrient) {
+                foreach (($prep['nutrients'] ?? []) as $nutrient) {
                     if ($nutrient['id'] == $nutrientId) {
                         $html .= '<td>' . htmlspecialchars($nutrient['value']) . ' ' . htmlspecialchars($nutrient['unitofmeasure']) . '</td>';
                         $html .= '<td>' . htmlspecialchars($nutrient['valueperserving']) . ' ' . htmlspecialchars($nutrient['unitofmeasure']) . '</td>';
@@ -341,13 +343,30 @@ class HelperService
     private function generateEnergyRow($stateofpreparationlist)
     {
         $html = '<tr>';
-        $html .= '<td class="nutrient">'. $stateofpreparationlist[0]["nutrients"][0]["name"].' (kJ/kcal)</td>';
+        if (empty($stateofpreparationlist) || !is_array($stateofpreparationlist)) {
+            return '';
+        }
+
+        $energyName = 'Energy';
+        if (isset($stateofpreparationlist[0]['nutrients']) && is_array($stateofpreparationlist[0]['nutrients'])) {
+            foreach ($stateofpreparationlist[0]['nutrients'] as $n) {
+                if (isset($n['id']) && ($n['id'] == 1 || $n['id'] == 2) && isset($n['name'])) {
+                    $energyName = $n['name'];
+                    break;
+                }
+            }
+            if ($energyName === 'Energy' && isset($stateofpreparationlist[0]['nutrients'][0]['name'])) {
+                $energyName = $stateofpreparationlist[0]['nutrients'][0]['name'];
+            }
+        }
+        $html .= '<td class="nutrient">'. htmlspecialchars($energyName) .' (kJ/kcal)</td>';
 
         foreach ($stateofpreparationlist as $prep) {
             $kj = '';
             $kcal = '';
-
-            foreach ($prep['nutrients'] as $nutrient) {
+            $kjPerServing = '';
+            $kcalPerServing = '';
+            foreach (($prep['nutrients'] ?? []) as $nutrient) {
                 if ($nutrient['id'] == 1) {
                     $kj = $nutrient['value'];
                     $kjPerServing = $nutrient['valueperserving'];
@@ -390,7 +409,7 @@ class HelperService
         foreach ($data->specification->nutrientset->stateOfPreparations as $stateofpreparation) {
             $stateofpreparations[] = [
                 'stateofpreparationid' => $stateofpreparation->stateOfPreparationId, 
-                'servingUnitValue' => $stateofpreparation->servingUnitValue, 
+                'servingUnitValue' => $stateofpreparation->servingUnitValue ?? 0, 
                 'name' => $this->getLocalizedValue($stateofpreparation->stateOfPreparationName ?? [], $language, ''),
                 'perHunderdUomName' => $this->getLocalizedValue($stateofpreparation->perHunderdUomName ?? [], $language, ''),
                 'servingUomName' => $this->getLocalizedValue($stateofpreparation->servingUomName ?? [], $language, ''), 
@@ -430,10 +449,6 @@ class HelperService
 
         return empty($nutrients) ? null : $nutrients;
     }
-
-
-
-
 
     /**
      * Retrieves preparation information for a product
@@ -482,9 +497,6 @@ class HelperService
             throw new PSApiException($e->getMessage(), 500);
         }
     }
-
-
-
 
     /**
      * Retrieves allergen information for a product
@@ -552,12 +564,12 @@ class HelperService
         $allergens = [];
         if($extended == false) { 
             foreach ($data->specification->allergenSet->allergens as $allergen) {
-                if ($allergen->parentId == 0) {
+                if ((isset($allergen->parentId) ? $allergen->parentId : 0) == 0) {
                     $allergens[] = [
                         'id' => $allergen->id,
                         'sequence' => $allergen->sequence ?? null,
                         'name' => $this->getLocalizedValue($allergen->name ?? [], $language, ''),
-                        'levelOfContainmentId' => $allergen->levelOfContainment->id,
+                        'levelOfContainmentId' => isset($allergen->levelOfContainment->id) ? $allergen->levelOfContainment->id : 0,
                         'levelOfContainment' => $this->getLocalizedValue($allergen->levelOfContainment->name ?? [], $language, '')
                     ];
                 }
@@ -567,9 +579,9 @@ class HelperService
                 $allergens[] = [
                     'id' => $allergen->id,
                     'sequence' => $allergen->sequence ?? null,
-                    'parentId' => $allergen->parentId ?? 0,
+                    'parentId' => isset($allergen->parentId) ? $allergen->parentId : 0,
                     'name' => $this->getLocalizedValue($allergen->name ?? [], $language, ''),
-                    'levelOfContainmentId' =>  $allergen->levelOfContainment->id,
+                    'levelOfContainmentId' =>  isset($allergen->levelOfContainment->id) ? $allergen->levelOfContainment->id : 0,
                     'levelOfContainment' => $this->getLocalizedValue($allergen->levelOfContainment->name ?? [], $language, '')
                 ];
             }
@@ -809,7 +821,6 @@ class HelperService
             return $legendHtml . $columnsHtml;
         }
     }
-
 
     /**
      * Gets a localized value from an array of multilingual objects
