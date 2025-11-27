@@ -8,10 +8,11 @@ class Environment
 {
     /**
      * Supported environments.
-     */
-    //const test = 'test';
+     */ 
     const preproduction = 'preproduction';
     const production = 'production';
+    const test = 'test';
+    const development = 'development';
 
     /**
      * All valid environments.
@@ -21,7 +22,9 @@ class Environment
     private static $validEnvironments = [
         //self::test,
         self::preproduction,
-        self::production
+        self::production,
+        self::test,
+        self::development
     ];
 
     /**

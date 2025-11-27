@@ -8,6 +8,7 @@ use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 use PSinfoodservice\Domain\Language;
 use PSinfoodservice\Domain\Output;
+use PSinfoodservice\Dtos\Incoming;
 
 /**
  * Service for accessing web API functionality in the PS in foodservice API.
@@ -33,22 +34,21 @@ class WebApiService
      * Retrieves a product sheet by logistic ID.
      *
      * @param int $logisticId The ID of the logistics item
-     * @param string $output The output format or section ('all' for complete data)
      * @param string $language The language code for the product sheet
      * @return object|null The product sheet data or null if not available
      * @throws PSApiException If retrieval of the product sheet fails
      */
-    public function getProductSheet(int $logisticId, string $output = Output::all, string $language = Language::all): ?object
+    public function getProductSheet(int $logisticId, string $language = Language::all): ?object
     {
         try {
             if($language == Language::all) {
                 $response = $this->client->getHttpClient()->get(
-                    $this->client->buildApiPath("ProductSheet/{$output}/{$logisticId}")
+                    $this->client->buildApiPath("ProductSheet/{$logisticId}")
                 ); 
             }else{ 
                 $language = Language::validate($language);
                 $response = $this->client->getHttpClient()->get(
-                    $this->client->buildApiPath("ProductSheet/{$language}/{$output}/{$logisticId}")
+                    $this->client->buildApiPath("ProductSheet/{$language}/{$logisticId}")
                 );
             }
             $data = json_decode($response->getBody()->getContents());
@@ -103,5 +103,39 @@ class WebApiService
             throw new PSApiException($e->getMessage(), 500);
         }
     }
+
+
+
+
+
+
+    /**
+     * Retrieves products associated with the current user.
+     *
+     * @return object|null The product sheet data or null if not available
+     */
+    //public function ValidateProductSheet(ProductSheetUpdateDto $productsheet): ?object
+    //{
+    //    try {
+    //        $response = $this->client->getHttpClient()->put(
+    //            $this->client->buildApiPath("productsheet")
+    //        );
+    //        $data = json_decode($response->getBody()->getContents());
+    //        if (empty($data)) {
+    //            return null;
+    //        }
+
+    //        return $data->Items;
+    //    } catch (ClientException $e) {
+    //        $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
+    //        throw new PSApiException(
+    //            $errorResponse['detail'] ?? $errorResponse['title'] ?? 'Unknown error occurred',
+    //            $e->getResponse()->getStatusCode(),
+    //            $errorResponse['traceId'] ?? null
+    //        );
+    //    } catch (ServerException | ConnectException $e) {
+    //        throw new PSApiException($e->getMessage(), 500);
+    //    }
+    //}
      
 }

@@ -173,7 +173,7 @@ class PSinfoodserviceClient
     }
 
     /**
-     * Set the API prefix path (e.g., "/v8/json").
+     * Set the API prefix path (e.g., "/v7/json").
      */
     public function setApiPrefix(string $apiPrefix): void
     {

@@ -7,6 +7,9 @@
     <RuntimeVersion>8.1</RuntimeVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="src\Domain\Output.php" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="src\Certs\" />
     <Folder Include="src\Domain\" />
     <Folder Include="src\Exceptions\" />
