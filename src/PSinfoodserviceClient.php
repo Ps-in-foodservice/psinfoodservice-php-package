@@ -17,6 +17,7 @@ use PSinfoodservice\Services\LookupService;
 use PSinfoodservice\Services\MasterService;
 use PSinfoodservice\Services\BrandService;
 use PSinfoodservice\Services\HelperService;
+use PSinfoodservice\Services\ValidationService;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -203,10 +204,17 @@ class PSinfoodserviceClient
 
     /**
      * Helper service with utility methods for data processing
-     * 
+     *
      * @var HelperService
      */
     public HelperService $helper;
+
+    /**
+     * Validation service for testing product data
+     *
+     * @var ValidationService
+     */
+    public ValidationService $validation;
      
     /**
      * Initialize the PS in foodservice API client
@@ -266,7 +274,8 @@ class PSinfoodserviceClient
         $this->masters = new MasterService($this);
         $this->brands = new BrandService($this);
         $this->files = new FileService($this);
-        $this->helper = new HelperService(); 
+        $this->helper = new HelperService();
+        $this->validation = new ValidationService($this); 
     }
 
     /**
