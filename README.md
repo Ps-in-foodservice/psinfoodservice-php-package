@@ -12,7 +12,7 @@ composer require psinfoodservice/psinfoodserviceapi
 
 ## Requirements
 
--   PHP 7.4 or higher
+-   PHP 8.0 or higher
 -   Composer
 -   PS in foodservice account with API access
 
@@ -307,6 +307,63 @@ try {
     echo "Error: " . $e->getMessage() . "\n";
 }
 ```
+
+## Development & Testing
+
+### Running Tests
+
+The package includes a comprehensive PHPUnit test suite with 108+ tests covering all major functionality.
+
+**Run all tests:**
+```bash
+composer test
+```
+
+**Run tests with detailed output:**
+```bash
+vendor/bin/phpunit --testdox
+```
+
+**Run specific test suite:**
+```bash
+vendor/bin/phpunit --testsuite Domain      # Domain validation tests
+vendor/bin/phpunit --testsuite Services    # Service layer tests
+vendor/bin/phpunit --testsuite Exceptions  # Exception handling tests
+vendor/bin/phpunit --testsuite DTOs        # Data transfer object tests
+```
+
+**Run specific test file:**
+```bash
+vendor/bin/phpunit tests/Unit/Domain/LanguageTest.php
+vendor/bin/phpunit tests/Unit/Exceptions/PSApiExceptionTest.php
+```
+
+**Run specific test method:**
+```bash
+vendor/bin/phpunit --filter test_is_valid_returns_true
+vendor/bin/phpunit --filter LanguageTest::test_validate
+```
+
+**Generate code coverage report:**
+```bash
+composer test:coverage
+```
+This generates an HTML coverage report in the `coverage-html/` directory.
+
+**Useful options during development:**
+```bash
+vendor/bin/phpunit --stop-on-failure  # Stop at first failure
+vendor/bin/phpunit --verbose          # Show detailed output
+vendor/bin/phpunit --debug            # Show debug information
+```
+
+### Installing Development Dependencies
+
+```bash
+composer install --dev
+```
+
+This installs PHPUnit, Mockery, and other development tools.
 
 ## License
 
