@@ -348,7 +348,11 @@ vendor/bin/phpunit --filter LanguageTest::test_validate
 ```bash
 composer test:coverage
 ```
-This generates an HTML coverage report in the `coverage-html/` directory.
+This writes an HTML coverage report under the `coverage/` directory.
+
+**PCOV** or **Xdebug** must be enabled in PHP first. The `test:coverage` script checks for a coverage driver and exits immediately with a short error if neither extension is loaded (so you do not run the full suite only to see a PHPUnit warning at the end). Enable **[PCOV](https://github.com/krakjoe/pcov)** or **[Xdebug](https://xdebug.org/)** (with coverage in `xdebug.mode`, e.g. `coverage` or `develop,coverage`) in `php.ini`, then verify with `php -m` (look for `pcov` or `xdebug`).
+
+To run tests without coverage, use `composer test` or `vendor/bin/phpunit`.
 
 **Useful options during development:**
 ```bash

@@ -43,13 +43,6 @@
         </exclude>
     </source>
 
-    <coverage>
-        <report>
-            <html outputDirectory="coverage-html"/>
-            <text outputFile="php://stdout" showOnlySummary="true"/>
-        </report>
-    </coverage>
-
     <php>
         <env name="PS_API_ENV" value="preproduction"/>
         <env name="PS_API_PREFIX" value="/v7/json"/>

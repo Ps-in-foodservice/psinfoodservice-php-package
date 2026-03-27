@@ -23,6 +23,9 @@
     },
     "scripts": {
         "test": "phpunit",
-        "test:coverage": "phpunit --coverage-html coverage"
+        "test:coverage": [
+            "@php scripts/check-coverage-driver.php",
+            "phpunit --coverage-html coverage"
+        ]
     }
 }
