@@ -66,8 +66,15 @@ class PSinfoodserviceClient
     private string $apiPrefix = '/v7/json';
 
     /**
+     * Whether to verify SSL certificates in HTTPS requests
+     *
+     * @var bool
+     */
+    private bool $verifySSL;
+
+    /**
      * Authentication service for login and token management
-     * 
+     *
      * @var AuthenticationService
      */
     public AuthenticationService $authentication;
@@ -130,12 +137,16 @@ class PSinfoodserviceClient
      
     /**
      * Initialize the PS in foodservice API client
-     * 
+     *
      * Creates a new client instance and initializes all service modules.
-     * 
+     *
      * @param string $environment The API environment to use (preproduction or production)
+     * @param string|null $apiPrefix Optional API version prefix (defaults to '/v7/json')
+     * @param bool $verifySSL Whether to verify SSL certificates (default: true)
+     *                        WARNING: Only set to false for development/testing environments.
+     *                        Disabling SSL verification in production is a security risk.
      */
-    public function __construct(string $environment = Environment::preproduction, ?string $apiPrefix = null)
+    public function __construct(string $environment = Environment::preproduction, ?string $apiPrefix = null, bool $verifySSL = true)
     {
         $urls = new PSFoodServiceUrls();
         $this->baseUrl = $urls->getBaseUrl($environment);
@@ -144,10 +155,12 @@ class PSinfoodserviceClient
         $prefixFromEnv = getenv('PS_API_PREFIX') ?: null;
         $this->apiPrefix = rtrim($apiPrefix ?? $prefixFromEnv ?? '/v7/json', '/');
 
+        $this->verifySSL = $verifySSL;
+
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl,
-            'verify' => false,
-            RequestOptions::HEADERS => [ 
+            'verify' => $this->verifySSL,
+            RequestOptions::HEADERS => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json'
             ]
@@ -202,7 +215,7 @@ class PSinfoodserviceClient
         $this->accessToken = $token;
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl,
-            'verify' => false,
+            'verify' => $this->verifySSL,
             RequestOptions::HEADERS => [
                 'Authorization' => "Bearer {$token}",
                 'Accept' => 'application/json',
