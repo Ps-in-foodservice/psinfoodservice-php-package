@@ -80,6 +80,53 @@ $client = new PSinfoodserviceClient('preproduction');
 $result = $client->authentication->login('your-email@example.com', 'your-password');
 ```
 
+### Setting Up Webhooks
+
+Subscribe to receive real-time notifications from the API when events occur.
+
+```php
+// Subscribe to webhook notifications
+$client->authentication->subscribe('https://your-app.com/webhook');
+
+// Subscribe with a secret for verification
+// The secret will be sent in the x-secret header with each webhook request
+$client->authentication->subscribe(
+    'https://your-app.com/webhook',
+    'your-secret-key-123'
+);
+
+// Unsubscribe from webhook notifications
+$client->authentication->unsubscribe();
+```
+
+**Webhook Request Details:**
+- Your webhook endpoint will receive POST requests from the API
+- If you provided a secret during subscription, it will be sent in the `x-secret` header
+- Use the secret to verify that webhook requests are coming from PS in foodservice
+- Your endpoint should respond with a 2xx status code to acknowledge receipt
+
+**Example webhook handler:**
+```php
+// webhook-handler.php
+$secret = $_SERVER['HTTP_X_SECRET'] ?? null;
+
+// Verify the secret if you configured one
+if ($secret !== 'your-secret-key-123') {
+    http_response_code(401);
+    exit('Unauthorized');
+}
+
+// Process the webhook payload
+$payload = json_decode(file_get_contents('php://input'), true);
+
+// Handle the event
+// ...
+
+// Return success response
+http_response_code(200);
+echo json_encode(['status' => 'received']);
+```
+
 ### Retrieving Product Information
 
 ```php
