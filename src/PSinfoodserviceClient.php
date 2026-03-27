@@ -9,7 +9,7 @@ use PSinfoodservice\Domain\Environment;
 use PSinfoodservice\Middleware\RetryMiddleware;
 use PSinfoodservice\Middleware\RateLimitMiddleware;
 use PSinfoodservice\Services\AuthenticationService;
-use PSinfoodservice\Services\ImageService;
+use PSinfoodservice\Services\FileService;
 use PSinfoodservice\Services\WebApiService;
 use PSinfoodservice\Services\AssortmentService;
 use PSinfoodservice\Services\ImpactScoreService;
@@ -167,11 +167,11 @@ class PSinfoodserviceClient
     public ImpactScoreService $impactScore;
 
     /**
-     * Image service for product image retrieval
-     * 
-     * @var ImageService
+     * File service for file and image retrieval
+     *
+     * @var FileService
      */
-    public ImageService $images;
+    public FileService $files;
 
     /**
      * Assortment service for managing assortment lists
@@ -265,7 +265,7 @@ class PSinfoodserviceClient
         $this->lookups = new LookupService($this);
         $this->masters = new MasterService($this);
         $this->brands = new BrandService($this);
-        $this->images = new ImageService($this); 
+        $this->files = new FileService($this);
         $this->helper = new HelperService(); 
     }
 
