@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Services;
  
 use GuzzleHttp\Exception\ClientException;
@@ -13,19 +15,13 @@ use PSinfoodservice\PSinfoodserviceClient;
 class ImpactScoreService
 {
     /**
-     * The PS in foodservice client instance.
-     */
-    private PSinfoodserviceClient $client;
-
-    /**
      * Initializes a new instance of the ImpactScoreService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
-    public function __construct(PSinfoodserviceClient $client)
-    {
-        $this->client = $client;
-    }
+    public function __construct(
+        private PSinfoodserviceClient $client
+    ) {}
 
     /**
      * Retrieves all available impact scores from the API.

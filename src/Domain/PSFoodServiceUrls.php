@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Domain;
 
 /**
@@ -43,17 +45,12 @@ class PSFoodServiceUrls
      */
     public function getBaseUrl(string $environment): string
     {
-        switch ($environment) {
-            case Environment::production:
-                return $this->production;
-            case Environment::staging:
-                return $this->staging;
-            case Environment::test:
-                return $this->test;
-            case Environment::development:
-                return $this->development;
-            default:
-                throw new \InvalidArgumentException("Invalid environment: {$environment}");
-        }
+        return match ($environment) {
+            Environment::production => $this->production,
+            Environment::preproduction => $this->staging,
+            Environment::test => $this->test,
+            Environment::development => $this->development,
+            default => throw new \InvalidArgumentException("Invalid environment: {$environment}")
+        };
     }
 }

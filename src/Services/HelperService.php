@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Services;
  
 use GuzzleHttp\Exception\ClientException;
