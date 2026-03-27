@@ -2,9 +2,11 @@
 namespace PSinfoodservice;
  
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
 use PSinfoodservice\Domain\PSFoodServiceUrls;
 use PSinfoodservice\Domain\Environment;
+use PSinfoodservice\Middleware\RetryMiddleware;
 use PSinfoodservice\Services\AuthenticationService;
 use PSinfoodservice\Services\ImageService;
 use PSinfoodservice\Services\WebApiService;
@@ -14,6 +16,7 @@ use PSinfoodservice\Services\LookupService;
 use PSinfoodservice\Services\MasterService;
 use PSinfoodservice\Services\BrandService;
 use PSinfoodservice\Services\HelperService;
+use Psr\Log\LoggerInterface;
 
 /**
  * Main client class for interacting with the PS in foodservice API
@@ -95,6 +98,37 @@ class PSinfoodserviceClient
     private int $tokenRefreshMargin = 60;
 
     /**
+     * Maximum number of retry attempts for failed requests
+     * Default: 3
+     *
+     * @var int
+     */
+    private int $maxRetries = 3;
+
+    /**
+     * Base delay in milliseconds for retry backoff
+     * Default: 1000 (1 second)
+     *
+     * @var int
+     */
+    private int $retryDelay = 1000;
+
+    /**
+     * Whether retry functionality is enabled
+     * Default: true
+     *
+     * @var bool
+     */
+    private bool $retryEnabled = true;
+
+    /**
+     * Optional PSR-3 logger for logging retry attempts
+     *
+     * @var LoggerInterface|null
+     */
+    private ?LoggerInterface $logger = null;
+
+    /**
      * Authentication service for login and token management
      *
      * @var AuthenticationService
@@ -168,8 +202,19 @@ class PSinfoodserviceClient
      *                        WARNING: Only set to false for development/testing environments.
      *                        Disabling SSL verification in production is a security risk.
      * @param bool $autoRefreshEnabled Whether to automatically refresh expired tokens (default: true)
+     * @param array $retryConfig Optional retry configuration:
+     *                          - 'enabled' (bool): Enable retry logic (default: true)
+     *                          - 'max_retries' (int): Maximum retry attempts (default: 3)
+     *                          - 'retry_delay' (int): Base delay in ms (default: 1000)
+     *                          - 'logger' (LoggerInterface): Optional PSR-3 logger
      */
-    public function __construct(string $environment = Environment::preproduction, ?string $apiPrefix = null, bool $verifySSL = true, bool $autoRefreshEnabled = true)
+    public function __construct(
+        string $environment = Environment::preproduction,
+        ?string $apiPrefix = null,
+        bool $verifySSL = true,
+        bool $autoRefreshEnabled = true,
+        array $retryConfig = []
+    )
     {
         $urls = new PSFoodServiceUrls();
         $this->baseUrl = $urls->getBaseUrl($environment);
@@ -181,14 +226,14 @@ class PSinfoodserviceClient
         $this->verifySSL = $verifySSL;
         $this->autoRefreshEnabled = $autoRefreshEnabled;
 
-        $this->httpClient = new Client([
-            'base_uri' => $this->baseUrl,
-            'verify' => $this->verifySSL,
-            RequestOptions::HEADERS => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
-            ]
-        ]);
+        // Configure retry settings
+        $this->retryEnabled = $retryConfig['enabled'] ?? true;
+        $this->maxRetries = $retryConfig['max_retries'] ?? 3;
+        $this->retryDelay = $retryConfig['retry_delay'] ?? 1000;
+        $this->logger = $retryConfig['logger'] ?? null;
+
+        // Create HTTP client with retry middleware
+        $this->httpClient = $this->createHttpClient();
 
         $this->authentication = new AuthenticationService($this);
         $this->webApi = new WebApiService($this);
@@ -227,6 +272,45 @@ class PSinfoodserviceClient
     }
 
     /**
+     * Create an HTTP client with configured middleware
+     *
+     * @param string|null $authToken Optional authorization token
+     * @return Client
+     */
+    private function createHttpClient(?string $authToken = null): Client
+    {
+        // Create handler stack with retry middleware
+        $stack = HandlerStack::create();
+
+        if ($this->retryEnabled) {
+            $retryMiddleware = new RetryMiddleware(
+                $this->maxRetries,
+                $this->retryDelay,
+                [500, 502, 503, 504], // Retry status codes
+                $this->logger
+            );
+            $stack->push($retryMiddleware);
+        }
+
+        // Build headers
+        $headers = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json'
+        ];
+
+        if ($authToken !== null) {
+            $headers['Authorization'] = "Bearer {$authToken}";
+        }
+
+        return new Client([
+            'base_uri' => $this->baseUrl,
+            'verify' => $this->verifySSL,
+            'handler' => $stack,
+            RequestOptions::HEADERS => $headers
+        ]);
+    }
+
+    /**
      * Set the access token for authenticated requests
      *
      * Updates the HTTP client with the new token in the Authorization header
@@ -239,16 +323,7 @@ class PSinfoodserviceClient
     {
         $this->accessToken = $token;
         $this->tokenObtainedAt = time();
-
-        $this->httpClient = new Client([
-            'base_uri' => $this->baseUrl,
-            'verify' => $this->verifySSL,
-            RequestOptions::HEADERS => [
-                'Authorization' => "Bearer {$token}",
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
-            ]
-        ]);
+        $this->httpClient = $this->createHttpClient($token);
     }
 
     /**
@@ -439,5 +514,105 @@ class PSinfoodserviceClient
     public function getTokenRefreshMargin(): int
     {
         return $this->tokenRefreshMargin;
+    }
+
+    /**
+     * Enable or disable retry logic
+     *
+     * @param bool $enabled True to enable, false to disable
+     * @return void
+     */
+    public function setRetryEnabled(bool $enabled): void
+    {
+        if ($this->retryEnabled !== $enabled) {
+            $this->retryEnabled = $enabled;
+            // Recreate HTTP client with new retry settings
+            $this->httpClient = $this->createHttpClient($this->accessToken ?? null);
+        }
+    }
+
+    /**
+     * Check if retry logic is enabled
+     *
+     * @return bool True if enabled, false otherwise
+     */
+    public function isRetryEnabled(): bool
+    {
+        return $this->retryEnabled;
+    }
+
+    /**
+     * Set the maximum number of retry attempts
+     *
+     * @param int $maxRetries Maximum retry attempts (0 to disable retries)
+     * @return void
+     */
+    public function setMaxRetries(int $maxRetries): void
+    {
+        $this->maxRetries = max(0, $maxRetries);
+        if ($this->retryEnabled) {
+            // Recreate HTTP client with new retry settings
+            $this->httpClient = $this->createHttpClient($this->accessToken ?? null);
+        }
+    }
+
+    /**
+     * Get the maximum number of retry attempts
+     *
+     * @return int Maximum retry attempts
+     */
+    public function getMaxRetries(): int
+    {
+        return $this->maxRetries;
+    }
+
+    /**
+     * Set the base delay for retry backoff in milliseconds
+     *
+     * @param int $delayMs Base delay in milliseconds
+     * @return void
+     */
+    public function setRetryDelay(int $delayMs): void
+    {
+        $this->retryDelay = max(0, $delayMs);
+        if ($this->retryEnabled) {
+            // Recreate HTTP client with new retry settings
+            $this->httpClient = $this->createHttpClient($this->accessToken ?? null);
+        }
+    }
+
+    /**
+     * Get the base delay for retry backoff
+     *
+     * @return int Base delay in milliseconds
+     */
+    public function getRetryDelay(): int
+    {
+        return $this->retryDelay;
+    }
+
+    /**
+     * Set the PSR-3 logger for logging retry attempts
+     *
+     * @param LoggerInterface|null $logger PSR-3 logger instance or null to disable logging
+     * @return void
+     */
+    public function setLogger(?LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
+        if ($this->retryEnabled) {
+            // Recreate HTTP client with new logger
+            $this->httpClient = $this->createHttpClient($this->accessToken ?? null);
+        }
+    }
+
+    /**
+     * Get the current logger instance
+     *
+     * @return LoggerInterface|null Current logger or null if not set
+     */
+    public function getLogger(): ?LoggerInterface
+    {
+        return $this->logger;
     }
 }
