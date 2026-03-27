@@ -73,6 +73,28 @@ class PSinfoodserviceClient
     private bool $verifySSL;
 
     /**
+     * Timestamp when the access token was obtained (Unix timestamp)
+     *
+     * @var int|null
+     */
+    private ?int $tokenObtainedAt = null;
+
+    /**
+     * Whether automatic token refresh is enabled
+     *
+     * @var bool
+     */
+    private bool $autoRefreshEnabled = true;
+
+    /**
+     * Safety margin in seconds before token expiry to trigger refresh
+     * Default: 60 seconds
+     *
+     * @var int
+     */
+    private int $tokenRefreshMargin = 60;
+
+    /**
      * Authentication service for login and token management
      *
      * @var AuthenticationService
@@ -145,8 +167,9 @@ class PSinfoodserviceClient
      * @param bool $verifySSL Whether to verify SSL certificates (default: true)
      *                        WARNING: Only set to false for development/testing environments.
      *                        Disabling SSL verification in production is a security risk.
+     * @param bool $autoRefreshEnabled Whether to automatically refresh expired tokens (default: true)
      */
-    public function __construct(string $environment = Environment::preproduction, ?string $apiPrefix = null, bool $verifySSL = true)
+    public function __construct(string $environment = Environment::preproduction, ?string $apiPrefix = null, bool $verifySSL = true, bool $autoRefreshEnabled = true)
     {
         $urls = new PSFoodServiceUrls();
         $this->baseUrl = $urls->getBaseUrl($environment);
@@ -156,6 +179,7 @@ class PSinfoodserviceClient
         $this->apiPrefix = rtrim($apiPrefix ?? $prefixFromEnv ?? '/v7/json', '/');
 
         $this->verifySSL = $verifySSL;
+        $this->autoRefreshEnabled = $autoRefreshEnabled;
 
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl,
@@ -204,15 +228,18 @@ class PSinfoodserviceClient
 
     /**
      * Set the access token for authenticated requests
-     * 
-     * Updates the HTTP client with the new token in the Authorization header.
-     * 
+     *
+     * Updates the HTTP client with the new token in the Authorization header
+     * and records the timestamp when the token was obtained.
+     *
      * @param string $token The access token received from authentication
      * @return void
      */
     public function setAccessToken(string $token): void
     {
         $this->accessToken = $token;
+        $this->tokenObtainedAt = time();
+
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl,
             'verify' => $this->verifySSL,
@@ -247,12 +274,170 @@ class PSinfoodserviceClient
      
     /**
      * Set the token expiration time
-     * 
+     *
      * @param int $expiresIn Token lifetime in seconds
      * @return void
      */
     public function setExpiresIn(int $expiresIn): void
     {
         $this->expiresIn = $expiresIn;
+    }
+
+    /**
+     * Get the current access token
+     *
+     * @return string|null The current access token or null if not set
+     */
+    public function getAccessToken(): ?string
+    {
+        return $this->accessToken ?? null;
+    }
+
+    /**
+     * Get the current refresh token
+     *
+     * @return string|null The current refresh token or null if not set
+     */
+    public function getRefreshToken(): ?string
+    {
+        return $this->refreshToken ?? null;
+    }
+
+    /**
+     * Get the token expiration time in seconds
+     *
+     * @return int|null The token lifetime in seconds or null if not set
+     */
+    public function getExpiresIn(): ?int
+    {
+        return $this->expiresIn ?? null;
+    }
+
+    /**
+     * Get the timestamp when the token was obtained
+     *
+     * @return int|null Unix timestamp or null if token hasn't been set
+     */
+    public function getTokenObtainedAt(): ?int
+    {
+        return $this->tokenObtainedAt;
+    }
+
+    /**
+     * Check if the current access token is expired or about to expire
+     *
+     * Considers the token expired if:
+     * - No token has been set
+     * - Current time exceeds (token obtained time + expiry duration - safety margin)
+     *
+     * @param int|null $margin Optional custom safety margin in seconds (default: uses configured margin)
+     * @return bool True if the token is expired or about to expire
+     */
+    public function isTokenExpired(?int $margin = null): bool
+    {
+        // If no token has been set yet, consider it expired
+        if ($this->tokenObtainedAt === null || !isset($this->expiresIn)) {
+            return true;
+        }
+
+        $safetyMargin = $margin ?? $this->tokenRefreshMargin;
+        $expiryTime = $this->tokenObtainedAt + $this->expiresIn - $safetyMargin;
+
+        return time() >= $expiryTime;
+    }
+
+    /**
+     * Ensure the current token is valid, refreshing it if necessary
+     *
+     * This method checks if the current token is expired or about to expire.
+     * If automatic refresh is enabled and the token needs refreshing, it will
+     * automatically call the refresh token endpoint to obtain a new token.
+     *
+     * @return void
+     * @throws \PSinfoodservice\Exceptions\PSApiException If token refresh fails
+     *
+     * @example
+     * ```php
+     * // Manually ensure token is valid before making an API call
+     * $client->ensureValidToken();
+     * $products = $client->webApi->getMyProducts();
+     * ```
+     */
+    public function ensureValidToken(): void
+    {
+        // Skip if auto-refresh is disabled
+        if (!$this->autoRefreshEnabled) {
+            return;
+        }
+
+        // Skip if token is still valid
+        if (!$this->isTokenExpired()) {
+            return;
+        }
+
+        // Check if we have the required tokens for refresh
+        if (!isset($this->accessToken) || !isset($this->refreshToken)) {
+            throw new \PSinfoodservice\Exceptions\PSApiException(
+                'Cannot refresh token: access token or refresh token is not set. Please login first.',
+                401
+            );
+        }
+
+        // Attempt to refresh the token
+        try {
+            $this->authentication->refreshToken($this->accessToken, $this->refreshToken);
+        } catch (\PSinfoodservice\Exceptions\PSApiException $e) {
+            // Re-throw with more context
+            throw new \PSinfoodservice\Exceptions\PSApiException(
+                'Automatic token refresh failed: ' . $e->getMessage() . '. Please login again.',
+                $e->getStatusCode(),
+                $e->getTraceId()
+            );
+        }
+    }
+
+    /**
+     * Enable or disable automatic token refresh
+     *
+     * @param bool $enabled True to enable, false to disable
+     * @return void
+     */
+    public function setAutoRefreshEnabled(bool $enabled): void
+    {
+        $this->autoRefreshEnabled = $enabled;
+    }
+
+    /**
+     * Check if automatic token refresh is enabled
+     *
+     * @return bool True if enabled, false otherwise
+     */
+    public function isAutoRefreshEnabled(): bool
+    {
+        return $this->autoRefreshEnabled;
+    }
+
+    /**
+     * Set the safety margin for token refresh
+     *
+     * The token will be considered expired this many seconds before actual expiry.
+     * This provides a buffer to prevent making API calls with an about-to-expire token.
+     *
+     * @param int $seconds Safety margin in seconds (default: 60)
+     * @return void
+     */
+    public function setTokenRefreshMargin(int $seconds): void
+    {
+        $this->tokenRefreshMargin = max(0, $seconds);
+    }
+
+    /**
+     * Get the current token refresh safety margin
+     *
+     * @return int Safety margin in seconds
+     */
+    public function getTokenRefreshMargin(): int
+    {
+        return $this->tokenRefreshMargin;
     }
 }
