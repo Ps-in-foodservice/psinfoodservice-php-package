@@ -7,6 +7,7 @@ use GuzzleHttp\RequestOptions;
 use PSinfoodservice\Domain\PSFoodServiceUrls;
 use PSinfoodservice\Domain\Environment;
 use PSinfoodservice\Middleware\RetryMiddleware;
+use PSinfoodservice\Middleware\RateLimitMiddleware;
 use PSinfoodservice\Services\AuthenticationService;
 use PSinfoodservice\Services\ImageService;
 use PSinfoodservice\Services\WebApiService;
@@ -129,6 +130,22 @@ class PSinfoodserviceClient
     private ?LoggerInterface $logger = null;
 
     /**
+     * Whether to automatically wait and retry on rate limit (429 responses)
+     * Default: false
+     *
+     * @var bool
+     */
+    private bool $rateLimitAutoWait = false;
+
+    /**
+     * Maximum time in seconds to wait for rate limit auto-retry
+     * Default: 60 seconds
+     *
+     * @var int
+     */
+    private int $rateLimitMaxWait = 60;
+
+    /**
      * Authentication service for login and token management
      *
      * @var AuthenticationService
@@ -207,6 +224,8 @@ class PSinfoodserviceClient
      *                          - 'max_retries' (int): Maximum retry attempts (default: 3)
      *                          - 'retry_delay' (int): Base delay in ms (default: 1000)
      *                          - 'logger' (LoggerInterface): Optional PSR-3 logger
+     *                          - 'rate_limit_auto_wait' (bool): Auto-wait on rate limit (default: false)
+     *                          - 'rate_limit_max_wait' (int): Max seconds to wait (default: 60)
      */
     public function __construct(
         string $environment = Environment::preproduction,
@@ -231,6 +250,10 @@ class PSinfoodserviceClient
         $this->maxRetries = $retryConfig['max_retries'] ?? 3;
         $this->retryDelay = $retryConfig['retry_delay'] ?? 1000;
         $this->logger = $retryConfig['logger'] ?? null;
+
+        // Configure rate limit settings
+        $this->rateLimitAutoWait = $retryConfig['rate_limit_auto_wait'] ?? false;
+        $this->rateLimitMaxWait = $retryConfig['rate_limit_max_wait'] ?? 60;
 
         // Create HTTP client with retry middleware
         $this->httpClient = $this->createHttpClient();
@@ -291,6 +314,14 @@ class PSinfoodserviceClient
             );
             $stack->push($retryMiddleware);
         }
+
+        // Add rate limit middleware (pushed last = executed first)
+        $rateLimitMiddleware = new RateLimitMiddleware(
+            $this->rateLimitAutoWait,
+            $this->rateLimitMaxWait,
+            $this->logger
+        );
+        $stack->push($rateLimitMiddleware);
 
         // Build headers
         $headers = [
@@ -614,5 +645,59 @@ class PSinfoodserviceClient
     public function getLogger(): ?LoggerInterface
     {
         return $this->logger;
+    }
+
+    /**
+     * Enable or disable automatic wait-and-retry on rate limit (429 responses)
+     *
+     * When enabled, the client will automatically wait for the duration specified
+     * in the Retry-After header (up to maxWaitTime) and retry the request.
+     *
+     * @param bool $enabled True to enable auto-wait, false to throw RateLimitException immediately
+     * @return void
+     */
+    public function setRateLimitAutoWait(bool $enabled): void
+    {
+        if ($this->rateLimitAutoWait !== $enabled) {
+            $this->rateLimitAutoWait = $enabled;
+            // Recreate HTTP client with new rate limit settings
+            $this->httpClient = $this->createHttpClient($this->accessToken ?? null);
+        }
+    }
+
+    /**
+     * Check if automatic wait-and-retry on rate limit is enabled
+     *
+     * @return bool True if enabled, false otherwise
+     */
+    public function isRateLimitAutoWaitEnabled(): bool
+    {
+        return $this->rateLimitAutoWait;
+    }
+
+    /**
+     * Set the maximum time to wait for rate limit auto-retry
+     *
+     * If the Retry-After header specifies a wait time longer than this,
+     * a RateLimitException will be thrown instead of waiting.
+     *
+     * @param int $seconds Maximum seconds to wait (default: 60)
+     * @return void
+     */
+    public function setRateLimitMaxWait(int $seconds): void
+    {
+        $this->rateLimitMaxWait = max(1, $seconds);
+        // Recreate HTTP client with new rate limit settings
+        $this->httpClient = $this->createHttpClient($this->accessToken ?? null);
+    }
+
+    /**
+     * Get the maximum wait time for rate limit auto-retry
+     *
+     * @return int Maximum seconds to wait
+     */
+    public function getRateLimitMaxWait(): int
+    {
+        return $this->rateLimitMaxWait;
     }
 }

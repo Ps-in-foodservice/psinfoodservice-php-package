@@ -37,10 +37,31 @@ class WebApiService
     /**
      * Retrieves a product sheet by logistic ID.
      *
+     * **Rate Limiting:** This endpoint is subject to rate limiting. If you exceed
+     * the rate limit, a RateLimitException will be thrown with retry information.
+     * You can enable automatic rate limit handling by configuring the client with
+     * `['rate_limit_auto_wait' => true]`.
+     *
      * @param int $logisticId The ID of the logistics item
      * @param string $language The language code for the product sheet
      * @return object|null The product sheet data or null if not available
      * @throws PSApiException If retrieval of the product sheet fails
+     * @throws \PSinfoodservice\Exceptions\RateLimitException If rate limit is exceeded
+     *
+     * @example
+     * ```php
+     * use PSinfoodservice\Exceptions\RateLimitException;
+     *
+     * try {
+     *     $productSheet = $client->webApi->getProductSheet(12345, 'NL');
+     * } catch (RateLimitException $e) {
+     *     // Rate limit exceeded - wait and retry
+     *     $waitSeconds = $e->getRetryAfter();
+     *     echo "Rate limit hit. Waiting {$waitSeconds} seconds...\n";
+     *     sleep($waitSeconds);
+     *     $productSheet = $client->webApi->getProductSheet(12345, 'NL');
+     * }
+     * ```
      */
     public function getProductSheet(int $logisticId, string $language = Language::all): ?object
     {
@@ -82,7 +103,13 @@ class WebApiService
     /**
      * Retrieves products associated with the current user.
      *
+     * **Rate Limiting:** This endpoint is subject to rate limiting. If you exceed
+     * the rate limit, a RateLimitException will be thrown unless automatic handling
+     * is enabled via `$client->setRateLimitAutoWait(true)`.
+     *
      * @return array|null Array of user's products or null if no products are available
+     * @throws PSApiException If retrieval fails
+     * @throws \PSinfoodservice\Exceptions\RateLimitException If rate limit is exceeded
      */
     public function getMyProducts(): ?array
     {
@@ -117,12 +144,15 @@ class WebApiService
      *
      * **Required Role:** Publish
      *
-     * **Rate Limiting:** 5 requests per second
+     * **Rate Limiting:** 5 requests per second. If exceeded, a RateLimitException will be
+     * thrown with retry information. Enable automatic handling with `['rate_limit_auto_wait' => true]`
+     * in the client configuration to have the SDK automatically wait and retry.
      *
      * @param ProductSheetUpdateDto|array $productSheet The product sheet data to update.
      *                                                   Can be a ProductSheetUpdateDto object or an associative array.
      * @return ResponseDto The response containing success status, logistic ID, and any validation errors
      * @throws PSApiException If the update fails due to client or server errors
+     * @throws \PSinfoodservice\Exceptions\RateLimitException If rate limit is exceeded
      *
      * @example
      * ```php

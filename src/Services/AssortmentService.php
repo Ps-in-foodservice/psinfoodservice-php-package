@@ -30,8 +30,12 @@ class AssortmentService
     /**
      * Retrieves all assortment lists.
      *
+     * **Rate Limiting:** This endpoint is subject to rate limiting. Configure automatic
+     * handling with `$client->setRateLimitAutoWait(true)` to wait and retry automatically.
+     *
      * @return array|null Array of assortment lists or null if none found
      * @throws PSApiException If an API error occurs
+     * @throws \PSinfoodservice\Exceptions\RateLimitException If rate limit is exceeded
      */
     public function getAssortmentLists(): ?array
     {
@@ -59,11 +63,14 @@ class AssortmentService
     /**
      * Retrieves a specific assortment list by ID.
      *
+     * **Rate Limiting:** This endpoint is subject to rate limiting.
+     *
      * @param string $id The assortment list ID
      * @param int $pageNumber Page number (default: 1)
      * @param int $pageSize Items per page (default: 250, max: 1000)
      * @return object|null The assortment list or null if not found
      * @throws PSApiException If an API error occurs
+     * @throws \PSinfoodservice\Exceptions\RateLimitException If rate limit is exceeded
      */
     public function getAssortmentList(string $id, int $pageNumber = 1, int $pageSize = 250): ?object
     {
