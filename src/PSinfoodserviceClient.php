@@ -10,6 +10,7 @@ use PSinfoodservice\Domain\PSFoodServiceUrls;
 use PSinfoodservice\Domain\Environment;
 use PSinfoodservice\Middleware\RetryMiddleware;
 use PSinfoodservice\Middleware\RateLimitMiddleware;
+use PSinfoodservice\Services\AssetService;
 use PSinfoodservice\Services\AuthenticationService;
 use PSinfoodservice\Services\FileService;
 use PSinfoodservice\Services\WebApiService;
@@ -19,6 +20,8 @@ use PSinfoodservice\Services\LookupService;
 use PSinfoodservice\Services\MasterService;
 use PSinfoodservice\Services\BrandService;
 use PSinfoodservice\Services\HelperService;
+use PSinfoodservice\Services\MijnPSService;
+use PSinfoodservice\Services\RelationService;
 use PSinfoodservice\Services\ValidationService;
 use Psr\Log\LoggerInterface;
 
@@ -217,7 +220,28 @@ class PSinfoodserviceClient
      * @var ValidationService
      */
     public ValidationService $validation;
-     
+
+    /**
+     * Asset service for retrieving asset information
+     *
+     * @var AssetService
+     */
+    public AssetService $assets;
+
+    /**
+     * Relation service for producer and brand owner information
+     *
+     * @var RelationService
+     */
+    public RelationService $relations;
+
+    /**
+     * MijnPS service for assortment uploads and related operations
+     *
+     * @var MijnPSService
+     */
+    public MijnPSService $mijnPS;
+
     /**
      * Initialize the PS in foodservice API client
      *
@@ -277,7 +301,10 @@ class PSinfoodserviceClient
         $this->brands = new BrandService($this);
         $this->files = new FileService($this);
         $this->helper = new HelperService();
-        $this->validation = new ValidationService($this); 
+        $this->validation = new ValidationService($this);
+        $this->assets = new AssetService($this);
+        $this->relations = new RelationService($this);
+        $this->mijnPS = new MijnPSService($this);
     }
 
     /**

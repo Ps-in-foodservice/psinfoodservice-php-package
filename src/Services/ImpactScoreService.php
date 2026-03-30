@@ -29,7 +29,7 @@ class ImpactScoreService
      * @return array|null An array of impact scores or null if no scores are available
      * @throws PSApiException If retrieval of the impact scores fails
      */
-    public function AllScores(): ?array
+    public function getAllScores(): ?array
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('ImpactScore/all'));
@@ -59,7 +59,7 @@ class ImpactScoreService
      * @return object|null The impact score data or null if no data is available
      * @throws PSApiException If retrieval of the impact score fails
      */
-    public function GetScore(int $logisticId) :?object
+    public function getScore(int $logisticId): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath("ImpactScore/score/{$logisticId}"));

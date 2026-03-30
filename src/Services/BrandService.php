@@ -29,7 +29,7 @@ class BrandService
      * @return array|null An array of brands or null if no brands are available
      * @throws PSApiException If retrieval of brands fails
      */
-    public function All(): ?array
+    public function getAll(): ?array
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Brand/All'));
@@ -53,12 +53,81 @@ class BrandService
     }
 
     /**
+     * Retrieves all brands added after a specific date.
+     *
+     * Returns brands that were created on or after the specified date.
+     * The date cannot be more than 3 months in the past.
+     *
+     * **Required Role:** Read, Publish, IsAdministrator, ReadAll, or Sync
+     *
+     * **Rate Limiting:** 5 requests per second
+     *
+     * @param \DateTimeInterface|string $fromDate The date from which to retrieve brands.
+     * @return array|null An array of brands or null if no brands match
+     * @throws PSApiException If retrieval fails or date is more than 3 months in the past
+     * @throws \InvalidArgumentException If the date format is invalid
+     */
+    public function getAllByDate(\DateTimeInterface|string $fromDate): ?array
+    {
+        try {
+            if (is_string($fromDate)) {
+                $dateTime = new \DateTime($fromDate);
+            } else {
+                $dateTime = $fromDate;
+            }
+
+            $threeMonthsAgo = new \DateTime('-3 months');
+            if ($dateTime < $threeMonthsAgo) {
+                throw new PSApiException('FromDate cannot be more than 3 months in the past', 400);
+            }
+
+            $formattedDate = $dateTime->format('c');
+
+            $response = $this->client->getHttpClient()->post(
+                $this->client->buildApiPath('Brand/all'),
+                [
+                    'json' => $formattedDate,
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json'
+                    ]
+                ]
+            );
+
+            $data = json_decode($response->getBody()->getContents());
+
+            if (empty($data) || empty($data->brands)) {
+                return null;
+            }
+
+            return $data->brands;
+
+        } catch (ClientException $e) {
+            $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
+            $message = $errorResponse['detail'] ?? $errorResponse['title'] ?? $errorResponse ?? 'Unknown error';
+
+            throw new PSApiException(
+                is_string($message) ? $message : 'Unknown error occurred',
+                $e->getResponse()->getStatusCode(),
+                $errorResponse['traceId'] ?? null
+            );
+        } catch (ServerException | ConnectException $e) {
+            throw new PSApiException($e->getMessage(), 500);
+        } catch (\Exception $e) {
+            if ($e instanceof PSApiException) {
+                throw $e;
+            }
+            throw new \InvalidArgumentException("Invalid date format: {$e->getMessage()}");
+        }
+    }
+
+    /**
      * Retrieves all brands associated with the current user.
      *
      * @return array|null An array of user's brands or null if no brands are available
      * @throws PSApiException If retrieval of brands fails
      */
-    public function MyBrands(): ?array
+    public function getMyBrands(): ?array
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Brand/MyBrands'));
@@ -84,98 +153,17 @@ class BrandService
     /**
      * Creates a new brand or updates an existing brand.
      *
-     * This method sends a POST request to create or update a brand. Only users with the
-     * Producer type can use this endpoint. When creating a new brand, set the 'Id' to 0.
-     * When updating, provide the existing brand ID and ensure you are the brand owner.
-     *
-     * **Required Role:** Publish
-     * **Required Type:** Producer
-     *
-     * **Rate Limiting:** 5 requests per second
-     *
-     * @param array $brandData The brand data array with the following structure:
-     *   - Id: int (0 for new brand, existing ID for update)
-     *   - BrandOwnerId: int (optional, the relation ID of the brand owner)
-     *   - Name: string (required, brand name)
-     *   - Description: string (optional, brand description)
-     *   - Website: string (optional, brand website URL)
-     *   - Email: string (optional, contact email)
-     *   - Telephone: string (optional, contact phone number)
-     *   - DeclarationFormatTypeId: int (optional, format type for declarations)
-     *   - IsVisibleInProducerDetail: bool (optional, visibility in producer details)
-     *   - IsPrivateLabel: bool (optional, whether this is a private label)
-     *   - IsPubliclyVisible: bool (optional, public visibility)
-     *   - AllowProducersToPublishSpecification: bool (optional, allow producers to publish specs)
-     *   - IngredientPercentageInFront: bool (optional, show ingredient percentage upfront)
-     *   - ProducerMustApproveSpecification: bool (optional, require producer approval)
-     *   - LabelContacts: array (optional, array of label contact information)
-     *
+     * @param array $brandData The brand data array
      * @return int The brand ID (newly created or updated)
-     * @throws PSApiException If the operation fails or user is not a producer/brand owner
-     *
-     * @example
-     * ```php
-     * // Create a new brand
-     * $brandData = [
-     *     'Id' => 0,
-     *     'Name' => 'My Brand',
-     *     'Description' => 'Premium quality products',
-     *     'Website' => 'https://mybrand.com',
-     *     'Email' => 'info@mybrand.com',
-     *     'IsPubliclyVisible' => true
-     * ];
-     *
-     * try {
-     *     $brandId = $client->brands->createOrUpdateBrand($brandData);
-     *     echo "Brand created with ID: {$brandId}";
-     * } catch (PSApiException $e) {
-     *     if ($e->getStatusCode() === 400) {
-     *         echo "Error: " . $e->getMessage();
-     *         // Possible errors:
-     *         // - "You are not a producer"
-     *         // - "You are not the owner of this brand"
-     *     }
-     * }
-     *
-     * // Update an existing brand
-     * $updateData = [
-     *     'Id' => 123,
-     *     'Name' => 'My Updated Brand',
-     *     'Description' => 'New description',
-     *     'Website' => 'https://newsite.com'
-     * ];
-     *
-     * $brandId = $client->brands->createOrUpdateBrand($updateData);
-     * echo "Brand updated: {$brandId}";
-     *
-     * // Create brand with label contacts
-     * $brandWithContacts = [
-     *     'Id' => 0,
-     *     'Name' => 'Brand with Contacts',
-     *     'LabelContacts' => [
-     *         [
-     *             'Name' => 'Contact Person',
-     *             'TargetMarketId' => 18, // Netherlands
-     *             'CommunicationAddress' => '123 Street Name, City',
-     *             'CommunicationChannels' => [
-     *                 ['Type' => 'email', 'Value' => 'contact@brand.com']
-     *             ]
-     *         ]
-     *     ]
-     * ];
-     *
-     * $brandId = $client->brands->createOrUpdateBrand($brandWithContacts);
-     * ```
+     * @throws PSApiException If the operation fails
      */
     public function createOrUpdateBrand(array $brandData): int
     {
         try {
-            // Ensure required fields are present
             if (!isset($brandData['Name']) || empty($brandData['Name'])) {
                 throw new PSApiException('Brand name is required', 400);
             }
 
-            // Set Id to 0 if not provided (for new brands)
             if (!isset($brandData['Id'])) {
                 $brandData['Id'] = 0;
             }
@@ -199,11 +187,9 @@ class BrandService
             $statusCode = $e->getResponse()->getStatusCode();
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
 
-            // Handle specific error cases
             $errorMessage = 'Failed to create or update brand';
 
             if ($statusCode === 400) {
-                // Check for specific error messages
                 if (is_string($errorResponse)) {
                     $errorMessage = $errorResponse;
                 } elseif (isset($errorResponse['detail'])) {

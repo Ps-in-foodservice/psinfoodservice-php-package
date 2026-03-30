@@ -62,14 +62,18 @@ For complete API documentation, visit the [PS in foodservice API Documentation](
 The client is organized into multiple modules, each handling a specific part of the API:
 
 -   **Authentication**: Login and token management
+-   **Assets**: Asset (image/document) information retrieval
 -   **Masters**: Reference data
 -   **Assortment**: Assortment list management
 -   **Brands**: Brand information
 -   **Lookups**: Track product updates
+-   **Relations**: Producer and brand owner information
 -   **WebApi**: Core product data operations
 -   **ImpactScore**: Environmental impact scoring
--   **Images**: Product image retrieval
+-   **Files**: File and image retrieval
+-   **Validation**: Product data validation testing
 -   **Helper**: Utility methods for data processing
+-   **Paginator**: Helper for iterating through paginated results
 
 ## Examples
 
@@ -203,7 +207,7 @@ if ($preparationInformations != null) {
 
 ```php
 // Get all impact scores
-$impactScoresResults = $client->impactScore->AllScores();
+$impactScoresResults = $client->impactScore->getAllScores();
 foreach ($impactScoresResults as $result) {
     echo "Id: " . $result->id . "\n";
     echo "ImpactScore: " . $result->score . "\n";
@@ -211,7 +215,7 @@ foreach ($impactScoresResults as $result) {
 }
 
 // Get specific product impact score
-$impactscore = $client->impactScore->GetScore($psid);
+$impactscore = $client->impactScore->getScore($psid);
 echo "ImpactScore: " . $impactscore->score . "\n";
 ```
 
@@ -258,7 +262,7 @@ echo "Not Changed: " . count($lookups->NotChanged) . "\n";
 
 ```php
 // Get tax rates
-$masters = $client->masters->GetAllMasters();
+$masters = $client->masters->getAllMasters();
 $taxrates = $masters->taxRates;
 foreach ($taxrates as $taxrate) {
     echo "Id: " . $taxrate->id . "\n";
@@ -266,7 +270,7 @@ foreach ($taxrates as $taxrate) {
 }
 
 // Get logistic shelf life options
-$logisticMasters = $client->masters->GetLogisticMasters();
+$logisticMasters = $client->masters->getLogisticMasters();
 $shelfLifes = $logisticMasters->shelfLifes;
 foreach ($shelfLifes as $shelfLife) {
     echo "Id: " . $shelfLife->id . "\n";
@@ -278,9 +282,74 @@ foreach ($shelfLifes as $shelfLife) {
 
 ```php
 // Get product image
-$imageData = $client->images->getImage(1234, '00000000-0000-0000-0000-000000000000');
+$imageData = $client->files->getImage(1234, '00000000-0000-0000-0000-000000000000');
 $base64Image = base64_encode($imageData);
 echo '<img src="data:image/png;base64,' . $base64Image . '" alt="Product Image">';
+```
+
+### Working with Assets
+
+```php
+// Get all assets for a product
+$assets = $client->assets->getAssetsFromLogistic(12345);
+if ($assets !== null) {
+    foreach ($assets as $asset) {
+        echo "Asset ID: {$asset->Id}\n";
+        echo "Type: {$asset->AssetType}\n";
+        echo "File ID: {$asset->FileId}\n";
+    }
+}
+
+// Get assets in a specific language
+$assets = $client->assets->getAssetsFromLogisticByLanguage('NL', 12345);
+```
+
+### Working with Relations
+
+```php
+// Get all producers
+$producers = $client->relations->getProducers();
+if ($producers !== null) {
+    foreach ($producers as $producer) {
+        echo "Producer ID: {$producer->id}\n";
+    }
+}
+
+// Get all brand owners
+$brandOwners = $client->relations->getBrandOwners();
+```
+
+### Using the Paginator Helper
+
+```php
+use PSinfoodservice\Helpers\Paginator;
+
+// Create paginator instance
+$paginator = new Paginator();
+
+// Get lookup results
+$lookups = $client->lookups->Gtin($request);
+
+// Iterate through changed items efficiently
+foreach ($paginator->iterateChangedItems($lookups) as $item) {
+    echo "Processing: {$item->LogisticId}\n";
+}
+
+// Get a summary
+$summary = $paginator->getSummary($lookups);
+echo "Changed: {$summary['changed']}, Deleted: {$summary['deleted']}\n";
+
+// Process items in batches
+$paginator->processBatches($lookups, function(array $items, string $type) {
+    foreach ($items as $item) {
+        // Process each item
+    }
+}, 50);
+
+// Filter items
+$filtered = $paginator->filter($lookups, function($item) {
+    return $item->LogisticId > 1000;
+}, 'changed');
 ```
 
 ## Error Handling
