@@ -31,21 +31,21 @@ For complete API documentation, visit the [PS in foodservice API Documentation](
 
 ## Modules
 
-| Module | Description |
-|--------|-------------|
-| **authentication** | Login, logout, token management, webhooks |
-| **webApi** | Core product data operations |
-| **lookups** | Track product updates (GTIN, PSID, ArticleNumber, etc.) |
-| **brands** | Brand information and management |
-| **masters** | Reference data (allergens, nutrients, countries, etc.) |
-| **assortment** | Assortment list management |
-| **assets** | Asset (image/document) information |
-| **relations** | Producer and brand owner information |
-| **files** | File and image retrieval |
-| **impactScore** | Environmental impact scoring |
-| **validation** | Product data validation |
-| **mijnPS** | MijnPS operations (assortment uploads) |
-| **helper** | Utility methods for data processing |
+| Module             | Description                                             |
+| ------------------ | ------------------------------------------------------- |
+| **authentication** | Login, logout, token management, webhooks               |
+| **webApi**         | Core product data operations                            |
+| **lookups**        | Track product updates (GTIN, PSID, ArticleNumber, etc.) |
+| **brands**         | Brand information and management                        |
+| **masters**        | Reference data (allergens, nutrients, countries, etc.)  |
+| **assortment**     | Assortment list management                              |
+| **assets**         | Asset (image/document) information                      |
+| **relations**      | Producer and brand owner information                    |
+| **files**          | File and image retrieval                                |
+| **impactScore**    | Environmental impact scoring                            |
+| **validation**     | Product data validation                                 |
+| **mijnPS**         | MijnPS operations (assortment uploads)                  |
+| **helper**         | Utility methods for data processing                     |
 
 ## Quick Start
 
@@ -155,4 +155,4 @@ See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Support
 
-Contact: info@psinfoodservice.com
+Contact: it@psinfoodservice.com
