@@ -16,24 +16,14 @@ class PSFoodServiceUrls
      * Staging environment URL.
      */
     private string $staging;
-    /**
-     * Test environment URL.
-     */
-    private string $test;
-    /**
-     * Development environment URL.
-     */
-    private string $development;
 
     /**
      * Initializes a new instance with predefined URLs for each environment.
      */
     public function __construct()
-    {        
-        $this->development = "https://localhost:5001";
-        $this->test = "https://test-api.psinfoodservice.com";
+    {
         $this->staging = "https://staging-api.psinfoodservice.com";
-        $this->production = "https://production-api.psinfoodservice.com"; 
+        $this->production = "https://production-api.psinfoodservice.com";
     }
 
     /**
@@ -48,8 +38,6 @@ class PSFoodServiceUrls
         return match ($environment) {
             Environment::production => $this->production,
             Environment::preproduction => $this->staging,
-            Environment::test => $this->test,
-            Environment::development => $this->development,
             default => throw new \InvalidArgumentException("Invalid environment: {$environment}")
         };
     }
