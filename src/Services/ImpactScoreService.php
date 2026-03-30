@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 namespace PSinfoodservice\Services;
  
 use GuzzleHttp\Exception\ClientException;
@@ -15,13 +13,19 @@ use PSinfoodservice\PSinfoodserviceClient;
 class ImpactScoreService
 {
     /**
+     * The PS in foodservice client instance.
+     */
+    private PSinfoodserviceClient $client;
+
+    /**
      * Initializes a new instance of the ImpactScoreService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
-    public function __construct(
-        private PSinfoodserviceClient $client
-    ) {}
+    public function __construct(PSinfoodserviceClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * Retrieves all available impact scores from the API.
@@ -29,10 +33,10 @@ class ImpactScoreService
      * @return array|null An array of impact scores or null if no scores are available
      * @throws PSApiException If retrieval of the impact scores fails
      */
-    public function getAllScores(): ?array
+    public function AllScores(): ?array
     {
         try {
-            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('ImpactScore/all'));
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('ImpactScore/AllScores'));
             $data = json_decode($response->getBody()->getContents());
 
             if (empty($data) || empty($data->impactScore)) {
@@ -59,10 +63,10 @@ class ImpactScoreService
      * @return object|null The impact score data or null if no data is available
      * @throws PSApiException If retrieval of the impact score fails
      */
-    public function getScore(int $logisticId): ?object
+    public function GetScore(int $logisticId) :?object
     {
         try {
-            $response = $this->client->getHttpClient()->get($this->client->buildApiPath("ImpactScore/score/{$logisticId}"));
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath("ImpactScore/GetScore/{$logisticId}"));
             $data = json_decode($response->getBody()->getContents());
 
             return $data;

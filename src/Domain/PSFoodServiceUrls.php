@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 namespace PSinfoodservice\Domain;
 
 /**
@@ -16,14 +14,24 @@ class PSFoodServiceUrls
      * Staging environment URL.
      */
     private string $staging;
+    /**
+     * Test environment URL.
+     */
+    private string $test;
+    /**
+     * Development environment URL.
+     */
+    private string $development;
 
     /**
      * Initializes a new instance with predefined URLs for each environment.
      */
     public function __construct()
-    {
+    {        
+        $this->development = "https://localhost:5001";
+        $this->test = "https://test-api.psinfoodservice.com";
         $this->staging = "https://staging-api.psinfoodservice.com";
-        $this->production = "https://production-api.psinfoodservice.com";
+        $this->production = "https://production-api.psinfoodservice.com"; 
     }
 
     /**
@@ -35,10 +43,17 @@ class PSFoodServiceUrls
      */
     public function getBaseUrl(string $environment): string
     {
-        return match ($environment) {
-            Environment::production => $this->production,
-            Environment::preproduction => $this->staging,
-            default => throw new \InvalidArgumentException("Invalid environment: {$environment}")
-        };
+        switch ($environment) {
+            case Environment::production:
+                return $this->production;
+            case Environment::staging:
+                return $this->staging;
+            case Environment::test:
+                return $this->test;
+            case Environment::development:
+                return $this->development;
+            default:
+                throw new \InvalidArgumentException("Invalid environment: {$environment}");
+        }
     }
 }

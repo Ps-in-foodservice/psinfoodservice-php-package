@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 namespace PSinfoodservice\Domain;
 
 /**
@@ -10,9 +8,11 @@ class Environment
 {
     /**
      * Supported environments.
-     */
+     */ 
     const preproduction = 'preproduction';
     const production = 'production';
+    const test = 'test';
+    const development = 'development';
 
     /**
      * All valid environments.
@@ -20,8 +20,11 @@ class Environment
      * @var array
      */
     private static $validEnvironments = [
+        //self::test,
         self::preproduction,
-        self::production
+        self::production,
+        self::test,
+        self::development
     ];
 
     /**

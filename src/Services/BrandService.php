@@ -1,28 +1,31 @@
 <?php
-
-declare(strict_types=1);
 namespace PSinfoodservice\Services;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
-use PSinfoodservice\Contracts\BrandServiceInterface;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 
 /**
  * Service for managing brand-related functionality in the PS in foodservice API.
  */
-class BrandService implements BrandServiceInterface
+class BrandService
 {
+    /**
+     * The PS in foodservice client instance.
+     */
+    private PSinfoodserviceClient $client;
+    
     /**
      * Initializes a new instance of the BrandService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
-    public function __construct(
-        private PSinfoodserviceClient $client
-    ) {}
+    public function __construct(PSinfoodserviceClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * Retrieves all available brands from the API.
@@ -30,7 +33,7 @@ class BrandService implements BrandServiceInterface
      * @return array|null An array of brands or null if no brands are available
      * @throws PSApiException If retrieval of brands fails
      */
-    public function getAll(): ?array
+    public function All(): ?array
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Brand/All'));
@@ -54,86 +57,17 @@ class BrandService implements BrandServiceInterface
     }
 
     /**
-     * Retrieves all brands added after a specific date.
-     *
-     * Returns brands that were created on or after the specified date.
-     * The date cannot be more than 3 months in the past.
-     *
-     * **Required Role:** Read, Publish, IsAdministrator, ReadAll, or Sync
-     *
-     * **Rate Limiting:** 5 requests per second
-     *
-     * @param \DateTimeInterface|string $fromDate The date from which to retrieve brands.
-     * @return array|null An array of brands or null if no brands match
-     * @throws PSApiException If retrieval fails or date is more than 3 months in the past
-     * @throws \InvalidArgumentException If the date format is invalid
-     */
-    public function getAllByDate(\DateTimeInterface|string $fromDate): ?array
-    {
-        try {
-            if (is_string($fromDate)) {
-                $dateTime = new \DateTime($fromDate);
-            } else {
-                $dateTime = $fromDate;
-            }
-
-            $threeMonthsAgo = new \DateTime('-3 months');
-            if ($dateTime < $threeMonthsAgo) {
-                throw new PSApiException('FromDate cannot be more than 3 months in the past', 400);
-            }
-
-            $formattedDate = $dateTime->format('c');
-
-            $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Brand/all'),
-                [
-                    'json' => $formattedDate,
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json'
-                    ]
-                ]
-            );
-
-            $data = json_decode($response->getBody()->getContents());
-
-            if (empty($data) || empty($data->brands)) {
-                return null;
-            }
-
-            return $data->brands;
-
-        } catch (ClientException $e) {
-            $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
-            $message = $errorResponse['detail'] ?? $errorResponse['title'] ?? $errorResponse ?? 'Unknown error';
-
-            throw new PSApiException(
-                is_string($message) ? $message : 'Unknown error occurred',
-                $e->getResponse()->getStatusCode(),
-                $errorResponse['traceId'] ?? null
-            );
-        } catch (ServerException | ConnectException $e) {
-            throw new PSApiException($e->getMessage(), 500);
-        } catch (\Exception $e) {
-            if ($e instanceof PSApiException) {
-                throw $e;
-            }
-            throw new \InvalidArgumentException("Invalid date format: {$e->getMessage()}");
-        }
-    }
-
-    /**
      * Retrieves all brands associated with the current user.
      *
      * @return array|null An array of user's brands or null if no brands are available
      * @throws PSApiException If retrieval of brands fails
      */
-    public function getMyBrands(): ?array
+    public function MyBrands(): ?array
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Brand/MyBrands'));
             $data = json_decode($response->getBody()->getContents());
-
+            
             if (empty($data) || empty($data->brands)) {
                 return null;
             }
@@ -144,65 +78,6 @@ class BrandService implements BrandServiceInterface
             throw new PSApiException(
                 $errorResponse['detail'] ?? $errorResponse['title'] ?? 'Unknown error occurred',
                 $e->getResponse()->getStatusCode(),
-                $errorResponse['traceId'] ?? null
-            );
-        } catch (ServerException | ConnectException $e) {
-            throw new PSApiException($e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Creates a new brand or updates an existing brand.
-     *
-     * @param array $brandData The brand data array
-     * @return int The brand ID (newly created or updated)
-     * @throws PSApiException If the operation fails
-     */
-    public function createOrUpdateBrand(array $brandData): int
-    {
-        try {
-            if (!isset($brandData['Name']) || empty($brandData['Name'])) {
-                throw new PSApiException('Brand name is required', 400);
-            }
-
-            if (!isset($brandData['Id'])) {
-                $brandData['Id'] = 0;
-            }
-
-            $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Brand/brand'),
-                [
-                    'json' => $brandData,
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json'
-                    ]
-                ]
-            );
-
-            $brandId = json_decode($response->getBody()->getContents(), true);
-
-            return (int)$brandId;
-
-        } catch (ClientException $e) {
-            $statusCode = $e->getResponse()->getStatusCode();
-            $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
-
-            $errorMessage = 'Failed to create or update brand';
-
-            if ($statusCode === 400) {
-                if (is_string($errorResponse)) {
-                    $errorMessage = $errorResponse;
-                } elseif (isset($errorResponse['detail'])) {
-                    $errorMessage = $errorResponse['detail'];
-                } elseif (isset($errorResponse['title'])) {
-                    $errorMessage = $errorResponse['title'];
-                }
-            }
-
-            throw new PSApiException(
-                $errorMessage,
-                $statusCode,
                 $errorResponse['traceId'] ?? null
             );
         } catch (ServerException | ConnectException $e) {

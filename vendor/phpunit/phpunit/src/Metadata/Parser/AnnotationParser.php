@@ -164,7 +164,7 @@ final class AnnotationParser implements Parser
                 ),
             );
         } catch (InvalidVersionRequirementException $e) {
-            EventFacade::emitter()->testRunnerTriggeredPhpunitWarning(
+            EventFacade::emitter()->testRunnerTriggeredWarning(
                 sprintf(
                     'Class %s is annotated using an invalid version requirement: %s',
                     $className,
@@ -394,7 +394,7 @@ final class AnnotationParser implements Parser
                     ),
                 );
             } catch (InvalidVersionRequirementException $e) {
-                EventFacade::emitter()->testRunnerTriggeredPhpunitWarning(
+                EventFacade::emitter()->testRunnerTriggeredWarning(
                     sprintf(
                         'Method %s::%s is annotated using an invalid version requirement: %s',
                         $className,
@@ -440,9 +440,9 @@ final class AnnotationParser implements Parser
     }
 
     /**
-     * @throws InvalidVersionOperatorException
-     *
      * @psalm-return list<Metadata>
+     *
+     * @throws InvalidVersionOperatorException
      */
     private function parseRequirements(array $requirements, string $level): array
     {
