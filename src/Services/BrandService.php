@@ -6,13 +6,14 @@ namespace PSinfoodservice\Services;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
+use PSinfoodservice\Contracts\BrandServiceInterface;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 
 /**
  * Service for managing brand-related functionality in the PS in foodservice API.
  */
-class BrandService
+class BrandService implements BrandServiceInterface
 {
     /**
      * Initializes a new instance of the BrandService.

@@ -21,16 +21,15 @@ class PSApiExceptionTest extends TestCase
 
         $this->assertStringContainsString('trace-123', $exception->getMessage());
         $this->assertStringContainsString('Test error', $exception->getMessage());
-        $this->assertSame('Test error - [trace-123]', $exception->getMessage());
+        $this->assertSame('Test error [TraceId: trace-123]', $exception->getMessage());
     }
 
     public function test_message_format_with_null_trace_id()
     {
         $exception = new PSApiException('Error message', 404, null);
 
-        $this->assertStringContainsString('Error message', $exception->getMessage());
-        $this->assertStringContainsString('[]', $exception->getMessage());
-        $this->assertSame('Error message - []', $exception->getMessage());
+        $this->assertSame('Error message', $exception->getMessage());
+        $this->assertStringNotContainsString('TraceId', $exception->getMessage());
     }
 
     public function test_extends_base_exception()
@@ -55,6 +54,34 @@ class PSApiExceptionTest extends TestCase
     {
         $exception = new PSApiException('Test error', 400, '');
 
-        $this->assertSame('Test error - []', $exception->getMessage());
+        $this->assertSame('Test error [TraceId: ]', $exception->getMessage());
+    }
+
+    public function test_get_trace_id_returns_trace_id()
+    {
+        $exception = new PSApiException('Test error', 500, 'abc-123-def');
+
+        $this->assertSame('abc-123-def', $exception->getTraceId());
+    }
+
+    public function test_get_trace_id_returns_null_when_not_set()
+    {
+        $exception = new PSApiException('Test error', 500);
+
+        $this->assertNull($exception->getTraceId());
+    }
+
+    public function test_get_trace_id_returns_null_when_null_passed()
+    {
+        $exception = new PSApiException('Test error', 500, null);
+
+        $this->assertNull($exception->getTraceId());
+    }
+
+    public function test_get_trace_id_returns_empty_string_when_empty_passed()
+    {
+        $exception = new PSApiException('Test error', 500, '');
+
+        $this->assertSame('', $exception->getTraceId());
     }
 }

@@ -6,6 +6,7 @@ namespace PSinfoodservice\Services;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
+use PSinfoodservice\Contracts\LookupServiceInterface;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 use PSinfoodservice\Domain\RequestLookupGtin;
@@ -19,7 +20,7 @@ use PSinfoodservice\Domain\RequestLookup;
 /**
  * Service for handling product lookup operations in the PS in foodservice API.
  */
-class LookupService {
+class LookupService implements LookupServiceInterface {
     /**
      * Initializes a new instance of the LookupService.
      *

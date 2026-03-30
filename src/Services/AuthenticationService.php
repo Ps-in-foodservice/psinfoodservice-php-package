@@ -7,12 +7,13 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use PSinfoodservice\PSinfoodserviceClient;
+use PSinfoodservice\Contracts\AuthenticationServiceInterface;
 use PSinfoodservice\Exceptions\PSApiException;
 
 /**
  * Service for handling authentication with the PS in foodservice API.
  */
-class AuthenticationService
+class AuthenticationService implements AuthenticationServiceInterface
 {
     /**
      * Initializes a new instance of the AuthenticationService.
@@ -108,6 +109,8 @@ class AuthenticationService
     {
         try {
             $this->client->getHttpClient()->post($this->client->buildApiPath('Account/logout'));
+            // Clear local tokens after successful server-side logout
+            $this->client->clearTokens();
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(

@@ -1,10 +1,8 @@
-# PS in foodservice API Client for PHP.
+# PS in foodservice API Client for PHP
 
 A comprehensive PHP client library for the PS in foodservice Web API (v7). This package simplifies integration with PS in foodservice services by providing a clean, type-safe interface for all API endpoints.
 
 ## Installation
-
-Install the package via Composer:
 
 ```bash
 composer require psinfoodservice/psinfoodserviceapi
@@ -12,46 +10,20 @@ composer require psinfoodservice/psinfoodserviceapi
 
 ## Requirements
 
--   PHP 8.0 or higher
--   Composer
--   PS in foodservice account with API access
-
-## Quick Start
-
-```php
-<?php
-// Load autoloader
-require_once __DIR__ . '/vendor/autoload.php';
-
-use PSinfoodservice\Domain\Language;
-use PSinfoodservice\PSinfoodserviceClient;
-
-// Initialize the client
-$client = new PSinfoodserviceClient('preproduction'); // Options: 'preproduction', 'production'
-$psid = 59;
-
-try {
-    // Authenticate
-    $result = $client->authentication->login('your-email@example.com', 'your-password');
-    echo "Authentication successful: Access token received.\n";
-
-    // Get product information
-    $productSheet = $client->webApi->getProductSheet($psid);
-    if ($productSheet != null) {
-        echo 'Product name: ' . $productSheet->summary->name[0]->value . "\n";
-    }
-} catch (\Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-}
-```
+- PHP 8.0 or higher
+- Composer
+- PS in foodservice account with API access
 
 ## Key Features
 
--   Easy authentication with PS in foodservice API
--   Support for all API endpoints
--   Helper methods for common operations
--   Type-safe request and response handling
--   Error handling and validation support
+- Full API endpoint coverage (~95%)
+- **Async/Concurrent requests** - Execute multiple API calls in parallel
+- **Response caching** - Built-in caching for master/reference data
+- **Request/Response logging** - Middleware for debugging and monitoring
+- **Automatic token refresh** - Seamless token management
+- **Retry with exponential backoff** - Resilient request handling
+- **Rate limit handling** - Auto-wait on 429 responses
+- Comprehensive error handling with trace IDs
 
 ## Documentation
 
@@ -59,389 +31,128 @@ For complete API documentation, visit the [PS in foodservice API Documentation](
 
 ## Modules
 
-The client is organized into multiple modules, each handling a specific part of the API:
+| Module | Description |
+|--------|-------------|
+| **authentication** | Login, logout, token management, webhooks |
+| **webApi** | Core product data operations |
+| **lookups** | Track product updates (GTIN, PSID, ArticleNumber, etc.) |
+| **brands** | Brand information and management |
+| **masters** | Reference data (allergens, nutrients, countries, etc.) |
+| **assortment** | Assortment list management |
+| **assets** | Asset (image/document) information |
+| **relations** | Producer and brand owner information |
+| **files** | File and image retrieval |
+| **impactScore** | Environmental impact scoring |
+| **validation** | Product data validation |
+| **mijnPS** | MijnPS operations (assortment uploads) |
+| **helper** | Utility methods for data processing |
 
--   **Authentication**: Login and token management
--   **Assets**: Asset (image/document) information retrieval
--   **Masters**: Reference data
--   **Assortment**: Assortment list management
--   **Brands**: Brand information
--   **Lookups**: Track product updates
--   **Relations**: Producer and brand owner information
--   **WebApi**: Core product data operations
--   **ImpactScore**: Environmental impact scoring
--   **Files**: File and image retrieval
--   **Validation**: Product data validation testing
--   **Helper**: Utility methods for data processing
--   **Paginator**: Helper for iterating through paginated results
+## Quick Start
+
+```php
+<?php
+require_once __DIR__ . '/vendor/autoload.php';
+
+use PSinfoodservice\PSinfoodserviceClient;
+
+$client = new PSinfoodserviceClient('preproduction');
+
+// Login
+$client->authentication->login('email@example.com', 'password');
+
+// Get product
+$product = $client->webApi->getProductSheet(59);
+echo $product->summary->name[0]->value;
+
+// Logout
+$client->authentication->logoff();
+```
 
 ## Examples
 
-### Authentication
+### Async/Concurrent Requests
 
 ```php
-$client = new PSinfoodserviceClient('preproduction');
-$result = $client->authentication->login('your-email@example.com', 'your-password');
+$async = $client->async();
+$async->get('brands', 'Brand/All');
+$async->get('masters', 'Master/All');
+$results = $async->execute();
 ```
 
-### Setting Up Webhooks
-
-Subscribe to receive real-time notifications from the API when events occur.
+### Cached Master Data
 
 ```php
-// Subscribe to webhook notifications
-$client->authentication->subscribe('https://your-app.com/webhook');
-
-// Subscribe with a secret for verification
-// The secret will be sent in the x-secret header with each webhook request
-$client->authentication->subscribe(
-    'https://your-app.com/webhook',
-    'your-secret-key-123'
-);
-
-// Unsubscribe from webhook notifications
-$client->authentication->unsubscribe();
+$cached = $client->cachedMasters();
+$masters = $cached->getAllMasters(); // API call
+$masters = $cached->getAllMasters(); // From cache
 ```
 
-**Webhook Request Details:**
-- Your webhook endpoint will receive POST requests from the API
-- If you provided a secret during subscription, it will be sent in the `x-secret` header
-- Use the secret to verify that webhook requests are coming from PS in foodservice
-- Your endpoint should respond with a 2xx status code to acknowledge receipt
+### Brand Management
 
-**Example webhook handler:**
 ```php
-// webhook-handler.php
-$secret = $_SERVER['HTTP_X_SECRET'] ?? null;
-
-// Verify the secret if you configured one
-if ($secret !== 'your-secret-key-123') {
-    http_response_code(401);
-    exit('Unauthorized');
-}
-
-// Process the webhook payload
-$payload = json_decode(file_get_contents('php://input'), true);
-
-// Handle the event
-// ...
-
-// Return success response
-http_response_code(200);
-echo json_encode(['status' => 'received']);
+$brands = $client->brands->getAll();
+$newBrands = $client->brands->getAllByDate('-1 week');
+$brandId = $client->brands->createOrUpdateBrand(['Name' => 'My Brand']);
 ```
 
-### Retrieving Product Information
+### MijnPS Uploads
 
 ```php
-// Get product sheet
-$psid = 59;
-$productSheet = $client->webApi->getProductSheet($psid);
-
-// Get ingredients information
-$ingredients = $client->helper->getIngredientsPreview($productSheet);
-if ($ingredients != null) {
-    echo 'Ingredients declaration: ' . $ingredients->declarationPreview . "\n";
-}
+$client->mijnPS->uploadAssortment('guid-here', '/path/to/file.xlsx');
 ```
 
-### Retrieving My Products
+### Assets & Relations
 
 ```php
-// Get all my products
-$myproducts = $client->webApi->getMyProducts();
-if ($myproducts != null) {
-    echo "<br /><br />My products:<br />";
-    foreach ($myproducts as $product) {
-        echo "Id: " . $product->LogisticId . "<br />GTIN: " . $product->GTIN . "<br />LastChanged: " . $product->LastChanged . "<br />";
-    }
-}
-```
-
-### Working with Allergens
-
-```php
-// Get extended allergen information in table format
-$allergens = $client->helper->getAllergensPreview(
-    $productSheet,
-    true,  // extended information
-    Language::nl,  // language
-    Outputstyle::table  // output style (table, bootstrap)
-);
-
-// Get simplified allergen information
-$simpleAllergens = $client->helper->getAllergensPreview(
-    $productSheet,
-    false,  // simplified information
-    Language::nl,
-    Outputstyle::table
-);
-```
-
-### Retrieving Nutritional Information
-
-```php
-$nutrients = $client->helper->getNutrientsPreview(
-    $productSheet,
-    Language::nl,
-    Outputstyle::table
-);
-```
-
-### Working with Preparation Information
-
-```php
-$preparationInformations = $client->helper->getPreparationInformationPreview(
-    $productSheet,
-    Language::nl,  // language
-);
-if ($preparationInformations != null) {
-    foreach ($preparationInformations as $info) {
-        echo 'Type: ' . $info->preparationType . "\n";
-        echo 'Description: ' . $info->description . "\n";
-    }
-}
-```
-
-### Getting Impact Scores
-
-```php
-// Get all impact scores
-$impactScoresResults = $client->impactScore->getAllScores();
-foreach ($impactScoresResults as $result) {
-    echo "Id: " . $result->id . "\n";
-    echo "ImpactScore: " . $result->score . "\n";
-    echo "CO2 FarmToFarm: " . $result->farmToFarm . "\n";
-}
-
-// Get specific product impact score
-$impactscore = $client->impactScore->getScore($psid);
-echo "ImpactScore: " . $impactscore->score . "\n";
-```
-
-### Working with Assortment Lists
-
-```php
-// Get all assortment lists
-$assortmentLists = $client->assortment->getAssortmentLists();
-foreach ($assortmentLists as $result) {
-    echo "Id: " . $result->id . "\n";
-    echo "Name: " . $result->name . "\n";
-    echo "Type: " . $result->assortmentType->name[0]->value . "\n";
-}
-
-// Get a specific assortment list
-$assortmentList = $client->assortment->getAssortmentList('00000000-0000-0000-0000-000000000000');
-echo "Items:\n";
-if ($assortmentList->items != null) {
-    foreach ($assortmentList->items as $item) {
-        echo "GTIN: " . $item->gtince . "\n";
-        echo "ArticleNumber: " . $item->articleNumber . "\n";
-    }
-}
-```
-
-### Tracking Updates
-
-```php
-// Get updates based on GTIN codes
-$lookups = $client->lookup->Gtin((
-    new RequestLookupGtin())
-    ->setSearchCriteria(['1236547892138', '12365478921381', '1236547892139'])
-    ->setLastUpdatedAfter(date('c', strtotime('-3 days')))
-    ->setTargetMarket(1)
-);
-
-echo "Changed: " . count($lookups->Changed) . "\n";
-echo "Deleted: " . count($lookups->Deleted) . "\n";
-echo "Not Found: " . count($lookups->NotFound) . "\n";
-echo "Not Changed: " . count($lookups->NotChanged) . "\n";
-```
-
-### Retrieving Master Data
-
-```php
-// Get tax rates
-$masters = $client->masters->getAllMasters();
-$taxrates = $masters->taxRates;
-foreach ($taxrates as $taxrate) {
-    echo "Id: " . $taxrate->id . "\n";
-    echo "Name: " . $taxrate->name[0]->value . "\n";
-}
-
-// Get logistic shelf life options
-$logisticMasters = $client->masters->getLogisticMasters();
-$shelfLifes = $logisticMasters->shelfLifes;
-foreach ($shelfLifes as $shelfLife) {
-    echo "Id: " . $shelfLife->id . "\n";
-    echo "Name: " . $shelfLife->name[0]->value . "\n";
-}
-```
-
-### Working with Images
-
-```php
-// Get product image
-$imageData = $client->files->getImage(1234, '00000000-0000-0000-0000-000000000000');
-$base64Image = base64_encode($imageData);
-echo '<img src="data:image/png;base64,' . $base64Image . '" alt="Product Image">';
-```
-
-### Working with Assets
-
-```php
-// Get all assets for a product
 $assets = $client->assets->getAssetsFromLogistic(12345);
-if ($assets !== null) {
-    foreach ($assets as $asset) {
-        echo "Asset ID: {$asset->Id}\n";
-        echo "Type: {$asset->AssetType}\n";
-        echo "File ID: {$asset->FileId}\n";
-    }
-}
-
-// Get assets in a specific language
-$assets = $client->assets->getAssetsFromLogisticByLanguage('NL', 12345);
-```
-
-### Working with Relations
-
-```php
-// Get all producers
 $producers = $client->relations->getProducers();
-if ($producers !== null) {
-    foreach ($producers as $producer) {
-        echo "Producer ID: {$producer->id}\n";
-    }
-}
-
-// Get all brand owners
 $brandOwners = $client->relations->getBrandOwners();
 ```
 
-### Using the Paginator Helper
-
-```php
-use PSinfoodservice\Helpers\Paginator;
-
-// Create paginator instance
-$paginator = new Paginator();
-
-// Get lookup results
-$lookups = $client->lookups->Gtin($request);
-
-// Iterate through changed items efficiently
-foreach ($paginator->iterateChangedItems($lookups) as $item) {
-    echo "Processing: {$item->LogisticId}\n";
-}
-
-// Get a summary
-$summary = $paginator->getSummary($lookups);
-echo "Changed: {$summary['changed']}, Deleted: {$summary['deleted']}\n";
-
-// Process items in batches
-$paginator->processBatches($lookups, function(array $items, string $type) {
-    foreach ($items as $item) {
-        // Process each item
-    }
-}, 50);
-
-// Filter items
-$filtered = $paginator->filter($lookups, function($item) {
-    return $item->LogisticId > 1000;
-}, 'changed');
-```
-
-## Error Handling
-
-The package includes comprehensive error handling:
+### Error Handling
 
 ```php
 try {
-    $result = $client->authentication->login('email@example.com', 'password');
-    // Use the API...
+    $client->authentication->login('email', 'pass');
 } catch (\PSinfoodservice\Exceptions\PSApiException $e) {
-    // Handle API-specific errors
-    echo "API Error: " . $e->getMessage() . "\n";
-    echo "HTTP Status: " . $e->getCode() . "\n";
-    echo "Trace ID: " . $e->getTraceId() . "\n";
-} catch (\GuzzleHttp\Exception\ClientException $e) {
-    // Handle HTTP client errors (4xx)
-    echo "Client Error: " . $e->getMessage() . "\n";
-} catch (\GuzzleHttp\Exception\ServerException $e) {
-    // Handle HTTP server errors (5xx)
-    echo "Server Error: " . $e->getMessage() . "\n";
-} catch (\Exception $e) {
-    // Handle other exceptions
-    echo "Error: " . $e->getMessage() . "\n";
+    echo $e->getMessage();
+    echo $e->getTraceId(); // For debugging
 }
+```
+
+## Advanced Configuration
+
+```php
+$client = new PSinfoodserviceClient(
+    environment: 'production',
+    verifySSL: true,
+    autoRefreshEnabled: true,
+    retryConfig: [
+        'enabled' => true,
+        'max_retries' => 3,
+        'rate_limit_auto_wait' => true,
+        'logger' => $psrLogger
+    ]
+);
 ```
 
 ## Development & Testing
 
-### Running Tests
+The package includes 310+ PHPUnit tests:
 
-The package includes a comprehensive PHPUnit test suite with 108+ tests covering all major functionality.
-
-**Run all tests:**
 ```bash
 composer test
-```
-
-**Run tests with detailed output:**
-```bash
 vendor/bin/phpunit --testdox
 ```
 
-**Run specific test suite:**
-```bash
-vendor/bin/phpunit --testsuite Domain      # Domain validation tests
-vendor/bin/phpunit --testsuite Services    # Service layer tests
-vendor/bin/phpunit --testsuite Exceptions  # Exception handling tests
-vendor/bin/phpunit --testsuite DTOs        # Data transfer object tests
-```
+## Service Interfaces
 
-**Run specific test file:**
-```bash
-vendor/bin/phpunit tests/Unit/Domain/LanguageTest.php
-vendor/bin/phpunit tests/Unit/Exceptions/PSApiExceptionTest.php
-```
+For testability: `AuthenticationServiceInterface`, `BrandServiceInterface`, `LookupServiceInterface`, `CacheInterface`
 
-**Run specific test method:**
-```bash
-vendor/bin/phpunit --filter test_is_valid_returns_true
-vendor/bin/phpunit --filter LanguageTest::test_validate
-```
+## Changelog
 
-**Generate code coverage report:**
-```bash
-composer test:coverage
-```
-This writes an HTML coverage report under the `coverage/` directory.
-
-**PCOV** or **Xdebug** must be enabled in PHP first. The `test:coverage` script checks for a coverage driver and exits immediately with a short error if neither extension is loaded (so you do not run the full suite only to see a PHPUnit warning at the end). Enable **[PCOV](https://github.com/krakjoe/pcov)** or **[Xdebug](https://xdebug.org/)** (with coverage in `xdebug.mode`, e.g. `coverage` or `develop,coverage`) in `php.ini`, then verify with `php -m` (look for `pcov` or `xdebug`).
-
-To run tests without coverage, use `composer test` or `vendor/bin/phpunit`.
-
-**Useful options during development:**
-```bash
-vendor/bin/phpunit --stop-on-failure  # Stop at first failure
-vendor/bin/phpunit --verbose          # Show detailed output
-vendor/bin/phpunit --debug            # Show debug information
-```
-
-### Installing Development Dependencies
-
-```bash
-composer install --dev
-```
-
-This installs PHPUnit, Mockery, and other development tools.
-
-## License
-
-You must have a PS in foodservice account to use this package. For more information, visit https://psinfoodservice.com
+See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Support
 
-For questions or support requests, please contact us at info@psinfoodservice.com.
+Contact: info@psinfoodservice.com

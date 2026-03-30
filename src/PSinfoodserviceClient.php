@@ -738,4 +738,71 @@ class PSinfoodserviceClient
     {
         return $this->rateLimitMaxWait;
     }
+
+    /**
+     * Clear all stored authentication tokens
+     *
+     * This method removes all locally stored tokens (access token, refresh token)
+     * and resets the token metadata. It also recreates the HTTP client without
+     * authentication headers.
+     *
+     * This is automatically called by AuthenticationService::logoff() but can
+     * also be called manually if needed.
+     *
+     * @return void
+     */
+    public function clearTokens(): void
+    {
+        unset($this->accessToken);
+        unset($this->refreshToken);
+        unset($this->expiresIn);
+        $this->tokenObtainedAt = null;
+
+        // Recreate HTTP client without authentication
+        $this->httpClient = $this->createHttpClient();
+    }
+
+    /**
+     * Create an AsyncClient for concurrent API requests.
+     *
+     * Use this to execute multiple independent API calls in parallel.
+     *
+     * @return \PSinfoodservice\Helpers\AsyncClient
+     *
+     * @example
+     * ```php
+     * $async = $client->async();
+     * $async->get('brands', 'Brand/All');
+     * $async->get('masters', 'Master/All');
+     * $results = $async->execute();
+     * ```
+     */
+    public function async(): \PSinfoodservice\Helpers\AsyncClient
+    {
+        return new \PSinfoodservice\Helpers\AsyncClient($this);
+    }
+
+    /**
+     * Create a CachedMasterService for cached master data access.
+     *
+     * Use this when you need to access master data multiple times
+     * within a request to avoid redundant API calls.
+     *
+     * @param \PSinfoodservice\Contracts\CacheInterface|null $cache Custom cache implementation
+     * @param int $ttl Cache TTL in seconds (default: 3600)
+     * @return \PSinfoodservice\Services\CachedMasterService
+     *
+     * @example
+     * ```php
+     * $cachedMasters = $client->cachedMasters();
+     * $masters = $cachedMasters->getAllMasters(); // First call hits API
+     * $masters = $cachedMasters->getAllMasters(); // Returns cached data
+     * ```
+     */
+    public function cachedMasters(
+        ?\PSinfoodservice\Contracts\CacheInterface $cache = null,
+        int $ttl = 3600
+    ): \PSinfoodservice\Services\CachedMasterService {
+        return new \PSinfoodservice\Services\CachedMasterService($this->masters, $cache, $ttl);
+    }
 }
