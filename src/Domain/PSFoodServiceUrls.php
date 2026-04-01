@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Domain;
 
 /**
@@ -14,46 +16,29 @@ class PSFoodServiceUrls
      * Staging environment URL.
      */
     private string $staging;
-    /**
-     * Test environment URL.
-     */
-    private string $test;
-    /**
-     * Development environment URL.
-     */
-    private string $development;
 
     /**
      * Initializes a new instance with predefined URLs for each environment.
      */
     public function __construct()
-    {        
-        $this->development = "https://localhost:5001";
-        $this->test = "https://test-api.psinfoodservice.com";
+    {
         $this->staging = "https://staging-api.psinfoodservice.com";
-        $this->production = "https://production-api.psinfoodservice.com"; 
+        $this->production = "https://webapi.psinfoodservice.com";
     }
 
     /**
      * Returns the base URL for the specified environment.
      *
-     * @param string $environment The environment name ('production', 'preproduction')
+     * @param string $environment The environment name ('production', 'staging')
      * @return string The base URL for the specified environment
      * @throws \InvalidArgumentException If the environment is not valid
      */
     public function getBaseUrl(string $environment): string
     {
-        switch ($environment) {
-            case Environment::production:
-                return $this->production;
-            case Environment::staging:
-                return $this->staging;
-            case Environment::test:
-                return $this->test;
-            case Environment::development:
-                return $this->development;
-            default:
-                throw new \InvalidArgumentException("Invalid environment: {$environment}");
-        }
+        return match ($environment) {
+            Environment::production => $this->production,
+            Environment::staging => $this->staging,
+            default => throw new \InvalidArgumentException("Invalid environment: {$environment}")
+        };
     }
 }

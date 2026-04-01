@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Exceptions;
 
 /**
@@ -12,6 +14,11 @@ class PSApiException extends \Exception
     private int $statusCode;
 
     /**
+     * Trace ID from the API response for debugging purposes.
+     */
+    private ?string $traceId;
+
+    /**
      * Initializes a new API exception.
      *
      * @param string $message The error message
@@ -20,8 +27,10 @@ class PSApiException extends \Exception
      */
     public function __construct(string $message, int $statusCode, ?string $traceId = null)
     {
-        parent::__construct($message . ' - [' . $traceId . ']');
+        $fullMessage = $traceId !== null ? "{$message} [TraceId: {$traceId}]" : $message;
+        parent::__construct($fullMessage);
         $this->statusCode = $statusCode;
+        $this->traceId = $traceId;
     }
 
     /**
@@ -32,5 +41,17 @@ class PSApiException extends \Exception
     public function getStatusCode(): int
     {
         return $this->statusCode;
+    }
+
+    /**
+     * Gets the trace ID from the API response.
+     *
+     * The trace ID can be used to track requests in the API logs for debugging.
+     *
+     * @return string|null The trace ID or null if not available
+     */
+    public function getTraceId(): ?string
+    {
+        return $this->traceId;
     }
 }

@@ -1,9 +1,13 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Services;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
+use PSinfoodservice\Contracts\LookupServiceInterface;
+use PSinfoodservice\Dtos\Outgoing\LookupResultDto;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 use PSinfoodservice\Domain\RequestLookupGtin;
@@ -17,38 +21,42 @@ use PSinfoodservice\Domain\RequestLookup;
 /**
  * Service for handling product lookup operations in the PS in foodservice API.
  */
-class LookupService {
-    /**
-     * The PS in foodservice client instance.
-     */
-    private PSinfoodserviceClient $client;
-
+class LookupService implements LookupServiceInterface {
     /**
      * Initializes a new instance of the LookupService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
-    public function __construct(PSinfoodserviceClient $client)
-    {
-        $this->client = $client;
-    }
+    public function __construct(
+        private PSinfoodserviceClient $client
+    ) {}
 
     /**
      * Looks up product information using Gtin numbers.
      *
      * @param RequestLookupGtin $request The lookup request containing GTIN data
-     * @return object|null The lookup response data or null if no data is available
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
      */
-    public function Gtin(RequestLookupGtin $request): ?object
+    public function Gtin(RequestLookupGtin $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/gtin/minimal' : 'Lookup/gtin';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/gtin'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -65,18 +73,28 @@ class LookupService {
      * Looks up product information using PS IDs.
      *
      * @param RequestLookupPSId $request The lookup request containing PS ID data
-     * @return object|null The lookup response data or null if no data is available
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
      */
-    public function PsId(RequestLookupPSId $request): ?object
+    public function PsId(RequestLookupPSId $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/psId/minimal' : 'Lookup/psId';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/psId'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -93,18 +111,28 @@ class LookupService {
      * Looks up product information using article numbers.
      *
      * @param RequestLookupArticlenumber $request The lookup request containing article number data
-     * @return object|null The lookup response data or null if no data is available
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
      */
-    public function ArticleNumber(RequestLookupArticlenumber $request): ?object
+    public function ArticleNumber(RequestLookupArticlenumber $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/articlenumber/minimal' : 'Lookup/articlenumber';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/articlenumber'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -121,18 +149,28 @@ class LookupService {
      * Looks up product information using GLN (Global Location Number).
      *
      * @param RequestLookupGln $request The lookup request containing GLN data
-     * @return object|null The lookup response data or null if no data is available
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
      */
-    public function GLN(RequestLookupGln $request): ?object
+    public function GLN(RequestLookupGln $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/Gln/minimal' : 'Lookup/Gln';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/Gln'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -142,9 +180,6 @@ class LookupService {
             );
         } catch (ServerException | ConnectException $e) {
             throw new PSApiException($e->getMessage(), 500);
-            /**
-             * Service for handling product lookup operations in the PS in foodservice API.
-             */
         }
     }
 
@@ -152,18 +187,28 @@ class LookupService {
      * Looks up product assortment information.
      *
      * @param RequestLookupAssortment $request The lookup request containing assortment data
-     * @return object|null The lookup response data or null if no data is available
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
-     */ 
-    public function Assortment(RequestLookupAssortment $request): ?object
+     */
+    public function Assortment(RequestLookupAssortment $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/Assortment/minimal' : 'Lookup/Assortment';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/Assortment'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -179,19 +224,29 @@ class LookupService {
     /**
      * Looks up product by brandid. Not available for all users.
      *
-     * @param RequestLookupBrandId $request The lookup request containing brandid 
-     * @return object|null The lookup response data or null if no data is available
+     * @param RequestLookupBrandId $request The lookup request containing brandid
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
-     */ 
-    public function BrandId(RequestLookupBrandId $request): ?object
+     */
+    public function BrandId(RequestLookupBrandId $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/BrandId/minimal' : 'Lookup/BrandId';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/BrandId'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -208,18 +263,28 @@ class LookupService {
      * Looks up all products by changedate. Not available for all users.
      *
      * @param RequestLookup $request The lookup request containing change date
-     * @return object|null The lookup response data or null if no data is available
+     * @param bool $minimal Optional flag to use minimal endpoint that returns only IDs (default: false)
+     *                      When true, returns minimal response with only identifiers.
+     *                      When false, returns full product data including all details.
+     * @return LookupResultDto|null The lookup response data or null if no data is available
      * @throws PSApiException If the lookup operation fails
-     */ 
-    public function All(RequestLookup $request): ?object
+     */
+    public function All(RequestLookup $request, bool $minimal = false): ?LookupResultDto
     {
+        $endpoint = $minimal ? 'Lookup/All/minimal' : 'Lookup/All';
+
         try {
             $response = $this->client->getHttpClient()->post(
-                $this->client->buildApiPath('Lookup/All'),
+                $this->client->buildApiPath($endpoint),
                 ['json' => $request]
             );
             $data = json_decode($response->getBody()->getContents());
-            return $data;
+
+            if (empty($data)) {
+                return null;
+            }
+
+            return LookupResultDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(

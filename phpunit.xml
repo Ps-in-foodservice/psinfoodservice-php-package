@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         executionOrder="depends,defects"
+         beStrictAboutOutputDuringTests="true"
+         failOnRisky="true"
+         failOnWarning="true"
+         cacheDirectory=".phpunit.cache"
+         backupGlobals="false">
+
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Services">
+            <directory>tests/Unit/Services</directory>
+        </testsuite>
+        <testsuite name="Domain">
+            <directory>tests/Unit/Domain</directory>
+        </testsuite>
+        <testsuite name="DTOs">
+            <directory>tests/Unit/Dtos</directory>
+        </testsuite>
+        <testsuite name="Exceptions">
+            <directory>tests/Unit/Exceptions</directory>
+        </testsuite>
+        <testsuite name="Middleware">
+            <directory>tests/Unit/Middleware</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+        </exclude>
+    </source>
+
+    <php>
+        <env name="PS_API_ENV" value="preproduction"/>
+        <env name="PS_API_PREFIX" value="/v7/json"/>
+    </php>
+</phpunit>

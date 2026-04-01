@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Services;
 
 use GuzzleHttp\Exception\ClientException;
@@ -13,19 +15,13 @@ use PSinfoodservice\PSinfoodserviceClient;
 class MasterService
 {
     /**
-     * The PS in foodservice client instance.
-     */
-    private PSinfoodserviceClient $client;
-
-    /**
      * Initializes a new instance of the MasterService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
-    public function __construct(PSinfoodserviceClient $client)
-    {
-        $this->client = $client;
-    }
+    public function __construct(
+        private PSinfoodserviceClient $client
+    ) {}
 
     /**
      * Retrieves all available master data from the API.
@@ -33,7 +29,7 @@ class MasterService
      * @return object|null Collection of all masters or null if no masters are available
      * @throws PSApiException If retrieval of the master data fails
      */
-    public function GetAllMasters(): ?object
+    public function getAllMasters(): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/All'));
@@ -62,7 +58,7 @@ class MasterService
      * @return object|null Collection of logistic masters or null if no masters are available
      * @throws PSApiException If retrieval of the master data fails
      */
-    public function GetLogisticMasters(): ?object
+    public function getLogisticMasters(): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Logistic'));
@@ -91,7 +87,7 @@ class MasterService
      * @return object|null Collection of product masters or null if no masters are available
      * @throws PSApiException If retrieval of the master data fails
      */
-    public function GetProductMasters(): ?object
+    public function getProductMasters(): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Product'));
@@ -120,7 +116,7 @@ class MasterService
      * @return object|null Collection of storage masters or null if no masters are available
      * @throws PSApiException If retrieval of the master data fails
      */
-    public function GetStorageMasters(): ?object
+    public function getStorageMasters(): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Storage'));
@@ -149,7 +145,7 @@ class MasterService
      * @return object|null Collection of specification masters or null if no masters are available
      * @throws PSApiException If retrieval of the master data fails
      */
-    public function GetSpecificationMasters(): ?object
+    public function getSpecificationMasters(): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Specification'));
@@ -178,7 +174,7 @@ class MasterService
      * @return object|null Collection of profile masters or null if no masters are available
      * @throws PSApiException If retrieval of the master data fails
      */
-    public function GetProfileMasters(): ?object
+    public function getProfileMasters(): ?object
     {
         try {
             $response = $this->client->getHttpClient()->get($this->client->buildApiPath('Master/Profile'));

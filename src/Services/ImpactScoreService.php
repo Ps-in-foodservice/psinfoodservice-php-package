@@ -1,9 +1,13 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Services;
- 
+
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use GuzzleHttp\Exception\ConnectException; 
+use GuzzleHttp\Exception\ConnectException;
+use PSinfoodservice\Dtos\Outgoing\ProductImpactScoreItemDto;
+use PSinfoodservice\Dtos\Outgoing\ProductImpactScoreListDto;
 use PSinfoodservice\Exceptions\PSApiException;
 use PSinfoodservice\PSinfoodserviceClient;
 
@@ -13,37 +17,31 @@ use PSinfoodservice\PSinfoodserviceClient;
 class ImpactScoreService
 {
     /**
-     * The PS in foodservice client instance.
-     */
-    private PSinfoodserviceClient $client;
-
-    /**
      * Initializes a new instance of the ImpactScoreService.
      *
      * @param PSinfoodserviceClient $client The PS in foodservice client
      */
-    public function __construct(PSinfoodserviceClient $client)
-    {
-        $this->client = $client;
-    }
+    public function __construct(
+        private PSinfoodserviceClient $client
+    ) {}
 
     /**
      * Retrieves all available impact scores from the API.
      *
-     * @return array|null An array of impact scores or null if no scores are available
+     * @return ProductImpactScoreListDto|null Impact score list or null if no scores are available
      * @throws PSApiException If retrieval of the impact scores fails
      */
-    public function AllScores(): ?array
+    public function getAllScores(): ?ProductImpactScoreListDto
     {
         try {
-            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('ImpactScore/AllScores'));
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath('ImpactScore/all'));
             $data = json_decode($response->getBody()->getContents());
 
-            if (empty($data) || empty($data->impactScore)) {
+            if (empty($data)) {
                 return null;
             }
 
-            return $data->impactScore;
+            return ProductImpactScoreListDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(
@@ -60,16 +58,20 @@ class ImpactScoreService
      * Retrieves a specific impact score by logistic ID.
      *
      * @param int $logisticId The ID of the logistics item
-     * @return object|null The impact score data or null if no data is available
+     * @return ProductImpactScoreItemDto|null The impact score data or null if no data is available
      * @throws PSApiException If retrieval of the impact score fails
      */
-    public function GetScore(int $logisticId) :?object
+    public function getScore(int $logisticId): ?ProductImpactScoreItemDto
     {
         try {
-            $response = $this->client->getHttpClient()->get($this->client->buildApiPath("ImpactScore/GetScore/{$logisticId}"));
+            $response = $this->client->getHttpClient()->get($this->client->buildApiPath("ImpactScore/score/{$logisticId}"));
             $data = json_decode($response->getBody()->getContents());
 
-            return $data;
+            if (empty($data)) {
+                return null;
+            }
+
+            return ProductImpactScoreItemDto::fromData($data);
         } catch (ClientException $e) {
             $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new PSApiException(

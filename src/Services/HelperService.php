@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace PSinfoodservice\Services;
  
 use GuzzleHttp\Exception\ClientException;
@@ -866,5 +868,64 @@ class HelperService
         }
 
         return $result;
+    }
+
+    /**
+     * Retrieves nutrient data as a structured array (without HTML rendering).
+     * 
+     * Use this method when you need to process nutrient data programmatically
+     * or render it with your own template.
+     * 
+     * @param object $productSheet Product data object
+     * @param string $language Language code
+     * @return array|null Array of preparation states with nutrients or null if not available
+     */
+    public function getNutrientsData(object $productSheet, string $language = Language::nl): ?array
+    {
+        if ($language == Language::all) {
+            $language = Language::nl;
+        }
+
+        if ($productSheet == null) {
+            return null;
+        }
+
+        return $this->getStateOfPreparationList($productSheet, $language);
+    }
+
+    /**
+     * Retrieves allergen data as a structured array (without HTML rendering).
+     * 
+     * Use this method when you need to process allergen data programmatically
+     * or render it with your own template.
+     * 
+     * @param object $productSheet Product data object
+     * @param bool $extended Whether to include sub-allergens
+     * @param string $language Language code
+     * @return array|null Array of allergens or null if not available
+     */
+    public function getAllergensData(object $productSheet, bool $extended = false, string $language = Language::nl): ?array
+    {
+        if ($language == Language::all) {
+            $language = Language::nl;
+        }
+
+        if ($productSheet == null) {
+            return null;
+        }
+
+        $list = $this->getAllegenList($productSheet, $extended, $language);
+        
+        if ($list === null) {
+            return null;
+        }
+
+        usort($list, function ($a, $b) {
+            $seqA = $a['sequence'] ?? 999;
+            $seqB = $b['sequence'] ?? 999;
+            return $seqA - $seqB;
+        });
+
+        return $list;
     }
 }
