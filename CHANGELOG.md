@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0]
+## [Unreleased] - 2026-04-15
+
+### Added
+
+- **Producten zoeken op handelseenheid (HE)**: Het is nu mogelijk om producten op te zoeken via het handelseenheidnummer. GTINs worden automatisch genormaliseerd naar 14 cijfers bij de vergelijking, waardoor zowel korte als lange GTIN-notaties correct worden herkend.
+- **Product verwijderen via de API**: Via de API kunnen producten nu worden verwijderd. Bij het verwijderen kan een reden worden meegegeven. Synchronisatie van verwijderde producten is ook ondersteund via een apart endpoint.
+
+### Changed
+
+- **Lookup filtert nu alleen op basiseenheden**: Bij alle lookup-methoden (op GTIN, artikelnummer, GLN, PS-ID, merk en assortiment) worden alleen nog basiseenheden teruggegeven. Niet-basiseenheden (zoals displays en omdozen) verschijnen niet meer in de resultaten.
+- **BTW-tarief respons uitgebreid**: Het `TaxRate`-object in de productblad-respons bevat nu ook een `id`-veld naast het bestaande `taxrateid`.
+
+### Fixed
+
+- **Dubbele producten in lookup resultaten**: Bij lookups waarbij hetzelfde product meerdere keren in de statuslijst voorkwam (bijv. door meerdere eenheden), wordt nu slechts één resultaat per product teruggegeven.
+
+---
+
+## [1.1.0] - 2026-03-31
 
 ### Added
 
@@ -21,7 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `getProducers()` - Get list of producers
     - `getBrandOwners()` - Get list of brand owners
 - **AssetDto**: New DTO for asset information
+- **Paginering bij lookup-endpoints**: Alle lookup-methoden (GTIN, artikelnummer, GLN, PS-ID, merk en assortiment) ondersteunen nu paginering. Stuur `PageNumber` (standaard 1) en `PageSize` (standaard 250, max 1000) mee in de request body. De respons bevat de velden `pageNumber`, `pageSize`, `totalPages`, `itemsChanged`, `itemsDeleted`, `itemsNotChanged` en `itemsNotFound` zodat je eenvoudig door meerdere pagina's kunt lopen.
+- **Paginering bij assortimentslijst items**: `GET assortments/{id}/items` accepteert nu de queryparameters `pageNumber` en `pageSize` (standaard 250). De respons bevat `pageNumber`, `pageSize`, `totalPages` en `totalItems`. Pagina 1 haalt altijd verse data op; de volgende pagina's worden vanuit een tijdelijke cache geserveerd (2 minuten). Bij een verlopen cache ontvang je een `410 Gone`-respons en dien je opnieuw vanaf pagina 1 te beginnen.
 - **Paginator**: New helper class for iterating through paginated lookup results
+- **Alternatieve GTINs bij logistiek product**: Het logistiek product (`GET`/`PUT` logistic) bevat nu een `alternativegtins`-lijst met extra GTINs (bijv. consumenteneenheden of EAN-varianten). Bij een `PUT` kunnen alternatieve GTINs worden meegegeven via `alternativegtins > alternativegtin` met de velden `gtin` en `alternativegtintypeid`.
+- **MijnPS: ImpactScore endpoint**: Nieuw endpoint `GET mijnps/impactscore/{relationId}` dat de eigen producten retourneert verrijkt met milieu-impact gegevens: impactscore, CO₂-uitstoot (`rawgreenhouseimpact`), waterverbruik, outlier-status en productcategorie.
+- **MijnPS: Relaties ophalen**: Nieuw endpoint `GET mijnps/relations` voor het ophalen van alle beschikbare relaties.
+- **Relatie-certificaten beheren**: Certificaten voor een relatie kunnen nu worden aangemaakt/bijgewerkt (`PUT`) en verwijderd (`DELETE`) via `mijnps/relationCertificates/{relationId}`.
+- **Push notificatie bij assortiment match**: Wanneer een product wordt gematcht aan een assortimentslijst, ontvangt de klant direct een webhook-notificatie (ProductUpdateNotification) zodat de productinformatie meteen opgehaald kan worden.
+- **Lookup minimale variant** (PHP): Alle lookup-methoden accepteren nu een `$minimal`-parameter. Bij `true` wordt het `/minimal`-endpoint gebruikt dat alleen identifiers teruggeeft (sneller, minder data).
 - **Service Interfaces**: Added interfaces for improved testability
     - `AuthenticationServiceInterface`
     - `BrandServiceInterface`
@@ -52,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Assortimentslijsten: geen limiet meer** ⚠️: Het veld `assortmentTypeId` is verwijderd uit de API. Stuur dit veld niet meer mee bij het aanmaken van een assortimentslijst. Assortimentslijsten kunnen nu onbeperkt worden aangemaakt.
 - **Method naming**: Standardized all public methods to camelCase (PSR-1)
     - `BrandService::All()` -> `getAll()`
     - `BrandService::MyBrands()` -> `getMyBrands()`
@@ -64,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **GTIN leeg bewaren**: Logistieke eenheden zonder barcode (identificatie via artikelnummer) behouden nu correct een lege/null GTIN-waarde. Voorheen werd een lege GTIN ten onrechte gevuld met nullen.
+- **Foutmeldingen verbeterd**: De API geeft nu consistent `400 Bad Request` terug bij ontbrekende verplichte velden (bijv. leeg request body bij lookup, ontbrekende subscribe-URL bij webhook) in plaats van een onverwachte serverfout.
 - Token cleanup after logout - local tokens are now properly cleared
 
 ## [1.0.0] - Initial Release
