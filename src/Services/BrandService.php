@@ -198,7 +198,7 @@ class BrandService implements BrandServiceInterface
                 $brandData['Id'] = 0;
             }
 
-            $response = $this->client->getHttpClient()->post(
+            $response = $this->client->getHttpClient()->put(
                 $this->client->buildApiPath('Brand/brand'),
                 [
                     'json' => $brandData,

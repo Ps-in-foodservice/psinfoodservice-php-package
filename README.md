@@ -87,6 +87,15 @@ $masters = $cached->getAllMasters(); // API call
 $masters = $cached->getAllMasters(); // From cache
 ```
 
+### Single Master Lists
+
+```php
+use PSinfoodservice\Domain\MasterName;
+
+$allergens = $client->masters->getMaster(MasterName::Allergens);
+$assortment = $client->masters->getAssortmentMasters(); // assortment types + match types
+```
+
 ### Brand Management
 
 ```php

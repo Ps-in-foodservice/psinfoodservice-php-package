@@ -5,6 +5,7 @@ namespace PSinfoodservice\Services;
 
 use PSinfoodservice\Contracts\CacheInterface;
 use PSinfoodservice\Cache\InMemoryCache;
+use PSinfoodservice\Domain\MasterName;
 
 /**
  * Master service wrapper with built-in caching.
@@ -120,6 +121,29 @@ class CachedMasterService
     }
 
     /**
+     * Get or fetch assortment masters with caching.
+     *
+     * @param int|null $ttl Optional custom TTL for this request
+     * @return object|null
+     */
+    public function getAssortmentMasters(?int $ttl = null): ?object
+    {
+        return $this->cached('assortment', fn() => $this->masterService->getAssortmentMasters(), $ttl);
+    }
+
+    /**
+     * Get or fetch a single master list with caching (cache key: the master name).
+     *
+     * @param string $name Master name, see {@see \PSinfoodservice\Domain\MasterName}
+     * @param int|null $ttl Optional custom TTL for this request
+     * @return array|null
+     */
+    public function getMaster(string $name, ?int $ttl = null): ?array
+    {
+        return $this->cached($name, fn() => $this->masterService->getMaster($name), $ttl);
+    }
+
+    /**
      * Clear all cached master data.
      *
      * @return bool
@@ -133,7 +157,12 @@ class CachedMasterService
             $this->cachePrefix . 'storage',
             $this->cachePrefix . 'specification',
             $this->cachePrefix . 'profile',
+            $this->cachePrefix . 'assortment',
         ];
+
+        foreach ((new \ReflectionClass(MasterName::class))->getConstants() as $name) {
+            $keys[] = $this->cachePrefix . $name;
+        }
 
         return $this->cache->deleteMultiple($keys);
     }
@@ -141,7 +170,8 @@ class CachedMasterService
     /**
      * Clear cache for a specific master type.
      *
-     * @param string $type Master type (all, logistic, product, storage, specification, profile)
+     * @param string $type Master type (all, logistic, product, storage, specification, profile, assortment)
+     *                     or a single master name (see MasterName)
      * @return bool
      */
     public function clearCacheFor(string $type): bool
